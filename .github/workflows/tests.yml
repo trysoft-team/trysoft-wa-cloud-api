@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
+        node-version: [20.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -21,6 +21,7 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm ci
+          npm install
           npm run lint
           npm run ts-check
           # npm run build

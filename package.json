@@ -1,6 +1,6 @@
 {
   "name": "trysoftwacloudapi",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "TrySoft Whatsapp Cloud Api Wrapper",
   "main": "dist/index.js",
   "scripts": {
@@ -81,6 +81,6 @@
   },
   "homepage": "https://github.com/trysoft-team/trysoft-wa-cloud-api#readme",
   "engines": {
-    "node": ">=12"
+    "node": "20"
   }
 }
