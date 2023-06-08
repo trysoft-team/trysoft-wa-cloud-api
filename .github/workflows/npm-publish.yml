@@ -20,6 +20,7 @@ jobs:
 
       - name: npm publish
         run: |
+          rf ~/.npmrc
           npm ci
           npm install
           npm run build
