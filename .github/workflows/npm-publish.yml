@@ -1,11 +1,6 @@
 name: npm publish
 
-on:
-  push:
-    branches:
-      - release
-    tags:
-      - v*
+on: [push, pull_request]
 
 jobs:
   build:
