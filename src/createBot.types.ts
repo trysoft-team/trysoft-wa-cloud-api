@@ -24,7 +24,8 @@ export interface Bot {
   }) => Promise<{ server?: Server; app: Application; }>;
   on: (event: PubSubEvent, cb: (message: Message) => void) => string;
   unsubscribe: (token: string) => string | boolean;
-
+  markRead: (id: string) => Promise<SendMessageResult>
+  getMediaDownload: (id : string, save_path : string) => Promise<object>
   sendText: (to: string, text: string, options?: {
     preview_url?: boolean;
   }) => Promise<SendMessageResult>;
