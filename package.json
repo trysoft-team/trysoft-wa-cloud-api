@@ -1,11 +1,11 @@
 {
   "name": "trysoftwacloudapi",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "TrySoft Whatsapp Cloud Api Wrapper",
   "main": "dist/index.js",
   "scripts": {
     "start": "nodemon",
-    "build": "rm -rf ~/.npmrc && rm -rf dist && tsc",
+    "build": "rm -rf dist && tsc",
     "lint": "eslint --ext .ts ./",
     "ts-check": "tsc --noEmit -p  .",
     "test": "npm run build && jest --testPathPattern=dist",
