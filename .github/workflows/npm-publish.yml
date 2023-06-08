@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [18.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -20,9 +20,7 @@ jobs:
 
       - name: npm publish
         run: |
-          rf ~/.npmrc
           npm ci
-          npm install
           npm run build
           npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}
           npm publish
