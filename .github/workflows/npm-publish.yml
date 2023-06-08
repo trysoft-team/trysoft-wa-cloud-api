@@ -20,6 +20,8 @@ jobs:
 
       - name: npm publish
         run: |
+          npm install -g npm-cli-adduser
+          npm-cli-adduser -u ${{ secrets.NPM_USER }} -p ${{ secrets.NPM_PASS }} -e ${{ secrets.NPM_EMAIL }}
           npm ci
           npm run build
           npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}

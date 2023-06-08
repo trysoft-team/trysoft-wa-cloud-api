@@ -55,8 +55,6 @@
     "WA",
     "whatsapp",
     "cloud",
-    "api",
-    "whatsapp-cloud",
     "cloud-api",
     "whatsapp-cloud-api",
     "whatsapp-business",
@@ -81,6 +79,6 @@
   },
   "homepage": "https://github.com/trysoft-team/trysoft-wa-cloud-api#readme",
   "engines": {
-    "node": "20"
+    "node": ">=12"
   }
 }
