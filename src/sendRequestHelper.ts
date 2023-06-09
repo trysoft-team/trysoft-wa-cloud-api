@@ -26,6 +26,7 @@ export const sendRequestHelper = (
   version: string = 'v14.0',
 ) => async <T>(data: T): Promise<SendMessageResult> => {
   try {
+    // eslint-disable-next-line no-console
     console.log(data);
 
     const { data: rawResult } = await axios({
@@ -47,7 +48,8 @@ export const sendRequestHelper = (
       success: result?.success,
     };
   } catch (err: unknown) {
-    console.error(err);
+    // eslint-disable-next-line no-console
+    console.log(err);
     if ((err as any).response) {
       throw (err as AxiosError)?.response?.data;
     // } else if ((err as any).request) {
@@ -96,7 +98,8 @@ export const getMediaDownload = (fromPhoneNumberId: string, accessToken: string,
     }
     return rawResult;
   } catch (err: unknown) {
-    console.error(err);
+    // eslint-disable-next-line no-console
+    console.log(err);
     if ((err as any).response) {
       throw (err as AxiosError)?.response?.data;
       // } else if ((err as any).request) {

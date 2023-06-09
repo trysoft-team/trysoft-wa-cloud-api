@@ -142,7 +142,7 @@ export const startExpressServer = (
     return;
   }
 
-  const port = options?.port || 3000;
+  const port = process.env.PORT || options?.port || 3000;
   const server = app.listen(port, () => {
     // eslint-disable-next-line no-console
     console.log(`🚀 Server running on port ${port}...`);
