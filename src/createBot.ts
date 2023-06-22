@@ -39,7 +39,13 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       return expressServer;
     },
     on: (event, cb) => {
-      const token = PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, (_, data) => cb(data));
+      // eslint-disable-next-line
+      const token = PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, function(_, data) {
+        // eslint-disable-next-line
+        data['wab_pid'] = fromPhoneNumberId;
+        // eslint-disable-next-line
+        cb(data)
+      });
       return token;
     },
     unsubscribe: (token) => PubSub.unsubscribe(token),

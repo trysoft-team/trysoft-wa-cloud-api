@@ -117,9 +117,12 @@ export const startExpressServer = (
     }
 
     const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
+    // eslint-disable-next-line
+    const wab_pid = fromPhoneNumberId;
 
     if (event && data) {
       const payload: Message = {
+        wab_pid,
         from,
         name,
         id,
