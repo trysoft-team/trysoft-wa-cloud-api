@@ -7,6 +7,7 @@ import { PubSubEvent } from './utils/pubSub';
 
 export interface Message {
   wab_pid: string;
+  wab_number: string;
   from: string;
   name: string | undefined;
   id: string;

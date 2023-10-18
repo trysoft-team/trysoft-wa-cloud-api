@@ -77,6 +77,7 @@ export const startExpressServer = (
       ...rest
     } = req.body.entry[0].changes[0].value.messages[0];
     const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
+    const fromPhoneNumber = req.body.entry[0].changes[0].value.metadata.display_phone_number;
 
     let event: PubSubEvent | undefined;
     let data: FreeFormObject | undefined;
@@ -119,10 +120,13 @@ export const startExpressServer = (
     const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
     // eslint-disable-next-line
     const wab_pid = fromPhoneNumberId;
+    // eslint-disable-next-line
+    const wab_number = fromPhoneNumber;
 
     if (event && data) {
       const payload: Message = {
         wab_pid,
+        wab_number,
         from,
         name,
         id,
