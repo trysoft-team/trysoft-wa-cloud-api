@@ -4,7 +4,7 @@ import { ICreateBot } from './createBot.types';
 import {
   ContactMessage, InteractiveMessage, LocationMessage,
   MediaBase, MediaMessage, TemplateMessage,
-  TextMessage, MarkRead,
+  TextMessage, MarkRead, InteractiveHeader,
 } from './messages.types';
 import { sendRequestHelper, getMediaDownload } from './sendRequestHelper';
 import { ExpressServer, startExpressServer } from './startExpressServer';
@@ -19,9 +19,12 @@ const payloadBase: PaylodBase = {
   recipient_type: 'individual',
 };
 
+// @ts-ignore
 export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
   let expressServer: ExpressServer;
-  const sendRequest = sendRequestHelper(fromPhoneNumberId, accessToken, opts?.version);
+
+  // @ts-ignore
+  const sendRequest = sendRequestHelper(fromPhoneNumberId, accessToken, opts?.version ? opts.version : process.env.VERSION);
   const sendMedia = getMediaDownload(fromPhoneNumberId, accessToken, opts?.version);
 
   const getMediaPayload = (urlOrObjectId: string, options?: MediaBase) => ({
@@ -176,5 +179,36 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         },
       },
     }),
+    //ts-ignore
+    sendFlow: (to: string, bodyText,buttonName: string, options: { footerText: string; header: InteractiveHeader; flow_token: string; flow_id: string; payload: object }) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      interactive: {
+        body: {
+          text: bodyText,
+        },
+        ...(options?.footerText
+                ? {
+                  footer: { text: options?.footerText },
+                }
+                : {}
+        ),
+        header: options?.header,
+        type: 'flow',
+        action : {
+          name: "flow",
+          parameters : {
+            flow_message_version: "3",
+            flow_token:  options.flow_token,
+            flow_id:  options.flow_id,
+            flow_cta: buttonName,
+            flow_action: "navigate",
+            flow_action_payload: options.payload
+          }
+        },
+      },
+    }),
+
   };
 };

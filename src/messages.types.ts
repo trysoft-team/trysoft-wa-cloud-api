@@ -107,6 +107,27 @@ export interface InteractiveReplyButton {
   };
 }
 
+export interface InteractiveFlowMessage {
+  type: 'flow';
+  action: {
+    name: "flow",
+    parameters: {
+      flow_message_version: "3",
+      flow_token:  string,
+      flow_id:  string,
+      flow_cta: string,
+      flow_action: "navigate",
+      flow_action_payload: {
+        screen?: string
+        data? : object
+
+      }
+    }
+  }
+}
+
+
+
 export interface InteractiveListMessage {
   type: 'list';
   action: {
@@ -122,7 +143,7 @@ export interface InteractiveListMessage {
   };
 }
 
-type Interactive = InteractiveBase & (InteractiveReplyButton | InteractiveListMessage);
+type Interactive = InteractiveBase & (InteractiveReplyButton | InteractiveFlowMessage |InteractiveListMessage);
 
 export interface Location {
   longitude: number;

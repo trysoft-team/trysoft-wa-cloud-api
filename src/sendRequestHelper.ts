@@ -23,7 +23,7 @@ export interface SendMessageResult {
 export const sendRequestHelper = (
   fromPhoneNumberId: string,
   accessToken: string,
-  version: string = 'v14.0',
+  version: string ,
 ) => async <T>(data: T): Promise<SendMessageResult> => {
   try {
     // eslint-disable-next-line no-console

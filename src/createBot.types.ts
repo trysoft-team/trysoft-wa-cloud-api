@@ -84,6 +84,21 @@ export interface Bot {
       header?: InteractiveHeader;
     },
   ) => Promise<SendMessageResult>;
+
+  sendFlow: (
+      to: string,
+      bodyText: string,
+      buttonName: string,
+      options?: {
+        footerText?: string;
+        header?: InteractiveHeader;
+        flow_token: string;
+        flow_id: string;
+        screen: string;
+        data?: object;
+      },
+  ) => Promise<SendMessageResult>;
+
 }
 
 export type ICreateBot = (
