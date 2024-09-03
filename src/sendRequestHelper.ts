@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { writeFile } from 'fs/promises';
+import {Session} from "node:inspector";
 
 // https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages
 interface OfficialSendMessageResult {
@@ -18,7 +19,9 @@ export interface SendMessageResult {
   messageId?: string;
   phoneNumber?: string;
   whatsappId?: string;
-  success?: boolean
+  success?: boolean,
+  payload?: any;
+  response?: any;
 }
 export const sendRequestHelper = (
   fromPhoneNumberId: string,
@@ -26,7 +29,8 @@ export const sendRequestHelper = (
   version: string ,
 ) => async <T>(data: T): Promise<SendMessageResult> => {
   try {
-    // eslint-disable-next-line no-console
+
+    // @ts-ignore
     console.log(data);
 
     const { data: rawResult } = await axios({
@@ -41,12 +45,21 @@ export const sendRequestHelper = (
     });
     const result = rawResult as OfficialSendMessageResult;
 
-    return {
+    const response: SendMessageResult = {
       messageId: result?.messages?.[0]?.id,
       phoneNumber: result?.contacts?.[0]?.input,
       whatsappId: result?.contacts?.[0]?.wa_id,
       success: result?.success,
+      payload: data,
+      response:result
     };
+    // @ts-ignore
+    if (!data?.status) {
+      // @ts-ignore
+      Session['messaging_'+data.to] = response;
+    }
+    return response
+
   } catch (err: unknown) {
     // eslint-disable-next-line no-console
     console.log(err);
