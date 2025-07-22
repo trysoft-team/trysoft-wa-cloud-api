@@ -4,7 +4,6 @@ import PubSub from 'pubsub-js';
 import { FreeFormObject } from './utils/misc';
 import { PubSubEvent, PubSubEvents } from './utils/pubSub';
 import { Message } from './createBot.types';
-import {Session} from "node:inspector";
 
 export interface ServerOptions {
   app?: Application;
@@ -61,14 +60,11 @@ export const startExpressServer = (
   }
 
   app.post(webhookPath, async (req, res) => {
-    let contact
-    let body_payload = req.body.whatsapp_webhook_payload;
-    contact = req.body.contact;
-    if (!body_payload.object || !body_payload.entry?.[0]?.changes?.[0]?.value) {
+    if (!req.body.object || !req.body.entry?.[0]?.changes?.[0]?.value) {
       res.sendStatus(400);
       return;
     }
-    if (body_payload?.entry?.[0]?.changes?.[0]?.value?.statuses) {
+    if (req.body?.entry?.[0]?.changes?.[0]?.value?.statuses) {
       res.sendStatus(202);
       return;
     }
@@ -79,9 +75,9 @@ export const startExpressServer = (
       timestamp,
       type,
       ...rest
-    } = body_payload.entry[0].changes[0].value.messages[0];
-    const fromPhoneNumberId = body_payload.entry[0].changes[0].value.metadata.phone_number_id;
-    const fromPhoneNumber = body_payload.entry[0].changes[0].value.metadata.display_phone_number;
+    } = req.body.entry[0].changes[0].value.messages[0];
+    const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
+    const fromPhoneNumber = req.body.entry[0].changes[0].value.metadata.display_phone_number;
 
     let event: PubSubEvent | undefined;
     let data: FreeFormObject | undefined;
@@ -98,11 +94,11 @@ export const startExpressServer = (
       case 'video':
       case 'sticker':
       case 'location':
+      case 'order':
       case 'contacts':
         event = PubSubEvents[type as PubSubEvent];
         data = rest[type];
         break;
-
       case 'interactive':
         event = rest.interactive.type;
         data = {
@@ -120,16 +116,14 @@ export const startExpressServer = (
         context: rest.context,
       };
     }
-
-    const name = body_payload.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
+    const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
     // eslint-disable-next-line
     const wab_pid = fromPhoneNumberId;
     // eslint-disable-next-line
     const wab_number = fromPhoneNumber;
 
-    let payload: Message
     if (event && data) {
-       payload = {
+      const payload: Message = {
         wab_pid,
         wab_number,
         from,
@@ -140,54 +134,14 @@ export const startExpressServer = (
         data,
       };
 
-      // @ts-ignore
-      Session['messaging_'+payload.from] = null;
-
       [
         `bot-${fromPhoneNumberId}-message`,
         `bot-${fromPhoneNumberId}-${event}`,
       ].forEach((e) => PubSub.publish(e, payload));
-
     }
 
-    // @ts-ignore
-    await checkSessionValue(payload, res);
-
-    // @ts-ignore
-    res.setHeader('content-type', 'application/json');
-    // @ts-ignore
-    const dataR =  Session['messaging_'+payload.from]
-    // @ts-ignore
-    const response = {
-      "contact": {
-        "status": "existing",
-        "uid": contact.uid,
-        "first_name": contact.first_name,
-        "last_name": contact.last_name,
-        "email": contact.email,
-        "language_code": "en",
-        "country": "Zimbabwe"
-      },
-      whatsapp_webhook_payload: undefined
-    }
-    // @ts-ignore
-    response.whatsapp_webhook_payload = dataR.payload
-    res.send(response);
+    res.sendStatus(200);
   });
-
-  function sleep(ms : number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function checkSessionValue(payload:Message,res: any): Promise<void> {
-    // Loop until Session[key] is no longer null
-    // @ts-ignore
-    while (Session['messaging_'+payload.from] === null || Session['messaging_'+payload.from] === undefined) {
-      await sleep(300); // Wait for 1 second before checking again
-    }
-    // @ts-ignore
-    resolve({})
-  }
 
   if (options?.app) {
     resolve({ app });

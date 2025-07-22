@@ -8,6 +8,7 @@ export enum PubSubEvents {
   sticker = 'sticker',
   location = 'location',
   contacts = 'contacts',
+  order = 'order',
   button_reply = 'button_reply',
   list_reply = 'list_reply',
   nfm_reply = 'nfm_reply'

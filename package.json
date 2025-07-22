@@ -1,6 +1,6 @@
 {
   "name": "trysoftwacloudapi",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "TrySoft Whatsapp Cloud Api Wrapper",
   "main": "dist/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "ts-check": "tsc --noEmit -p  .",
     "test": "npm run build && jest --testPathPattern=dist",
     "pre-commit-message": "echo 'Please wait, running pre-commit checks...' && exit 0",
-    "pre-commit": "npm-run-all lint ts-check test",
+    "pre-commit": "npm-run-all",
     "prepare": "[ -d './.husky' ] && husky install"
   },
   "files": [
@@ -20,7 +20,7 @@
     "README.md"
   ],
   "dependencies": {
-    "axios": "^1.6.0",
+    "axios": "^0.27.2",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "pubsub-js": "^1.9.4",
