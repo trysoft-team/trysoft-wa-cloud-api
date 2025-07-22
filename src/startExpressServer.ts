@@ -94,11 +94,11 @@ export const startExpressServer = (
       case 'video':
       case 'sticker':
       case 'location':
+      case 'order':
       case 'contacts':
         event = PubSubEvents[type as PubSubEvent];
         data = rest[type];
         break;
-
       case 'interactive':
         event = rest.interactive.type;
         data = {
@@ -116,7 +116,6 @@ export const startExpressServer = (
         context: rest.context,
       };
     }
-
     const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
     // eslint-disable-next-line
     const wab_pid = fromPhoneNumberId;

@@ -30,25 +30,31 @@ export interface Bot {
   getMediaDownload: (id : string, save_path : string) => Promise<object>
   sendText: (to: string, text: string, options?: {
     preview_url?: boolean;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendMessage: (to: string, text: string, options?: {
     preview_url?: boolean;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendImage: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendDocument: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
     filename?: string;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendAudio: (to: string, urlOrObjectId: string) => Promise<SendMessageResult>;
   sendVideo: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendSticker: (to: string, urlOrObjectId: string) => Promise<SendMessageResult>;
   sendLocation: (to: string, latitude: number, longitude: number, options?: {
     name?: string;
     address?: string;
+    context?: object;
   }) => Promise<SendMessageResult>;
   sendTemplate: (
     to: string,
@@ -66,6 +72,7 @@ export interface Bot {
     options?: {
       footerText?: string;
       header?: InteractiveHeader;
+      context?: object;
     },
   ) => Promise<SendMessageResult>;
   sendList: (
@@ -82,6 +89,7 @@ export interface Bot {
     options?: {
       footerText?: string,
       header?: InteractiveHeader;
+      context?: object;
     },
   ) => Promise<SendMessageResult>;
 
@@ -96,6 +104,15 @@ export interface Bot {
         flow_id: string;
         screen: string;
         data?: object;
+        context?: object;
+      },
+  ) => Promise<SendMessageResult>;
+
+  sendLocationRequest: (
+      to: string,
+      bodyText: string,
+      options?: {
+        context?: object;
       },
   ) => Promise<SendMessageResult>;
 

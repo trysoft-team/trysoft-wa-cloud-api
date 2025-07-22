@@ -6,12 +6,18 @@ interface Message {
   messaging_product: 'whatsapp';
   recipient_type: 'individual';
   to: string;
+  context?: {
+    message_id?: string;
+  };
 }
 
 export interface MarkRead {
   messaging_product: 'whatsapp';
   status: 'read';
   message_id: string;
+  typing_indicator: {
+    "type": "text"
+  }
 }
 
 interface ContactName {
@@ -126,7 +132,12 @@ export interface InteractiveFlowMessage {
   }
 }
 
-
+export interface InteractiveLocationRequestMessage {
+  type: 'location_request_message';
+  action: {
+    name: "send_location"
+  }
+}
 
 export interface InteractiveListMessage {
   type: 'list';
@@ -143,7 +154,7 @@ export interface InteractiveListMessage {
   };
 }
 
-type Interactive = InteractiveBase & (InteractiveReplyButton | InteractiveFlowMessage |InteractiveListMessage);
+type Interactive = InteractiveBase & (InteractiveReplyButton | InteractiveFlowMessage | InteractiveLocationRequestMessage |InteractiveListMessage);
 
 export interface Location {
   longitude: number;

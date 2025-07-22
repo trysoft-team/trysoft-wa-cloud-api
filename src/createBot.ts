@@ -54,12 +54,16 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       messaging_product: 'whatsapp',
       status: 'read',
       message_id: id,
+      typing_indicator: {
+        "type": "text"
+      }
     }),
     getMediaDownload: (id : string, save_path : string) => sendMedia(id, save_path),
     sendText: (to, text, options) => sendRequest<TextMessage>({
       ...payloadBase,
       to,
       type: 'text',
+      context: options?.context,
       text: {
         body: text,
         preview_url: options?.preview_url,
@@ -72,12 +76,14 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       ...payloadBase,
       to,
       type: 'image',
+      context: options?.context,
       image: getMediaPayload(urlOrObjectId, options),
     }),
     sendDocument: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
       ...payloadBase,
       to,
       type: 'document',
+      context: options?.context,
       document: getMediaPayload(urlOrObjectId, options),
     }),
     sendAudio: (to, urlOrObjectId) => sendRequest<MediaMessage>({
@@ -90,6 +96,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       ...payloadBase,
       to,
       type: 'video',
+      context: options?.context,
       video: getMediaPayload(urlOrObjectId, options),
     }),
     sendSticker: (to, urlOrObjectId) => sendRequest<MediaMessage>({
@@ -102,6 +109,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       ...payloadBase,
       to,
       type: 'location',
+      context: options?.context,
       location: {
         latitude,
         longitude,
@@ -131,6 +139,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       ...payloadBase,
       to,
       type: 'interactive',
+      context: options?.context,
       interactive: {
         body: {
           text: bodyText,
@@ -158,6 +167,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       ...payloadBase,
       to,
       type: 'interactive',
+      context: options?.context,
       interactive: {
         body: {
           text: bodyText,
@@ -180,10 +190,11 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     //ts-ignore
-    sendFlow: (to: string, bodyText,buttonName: string, options: { footerText: string; header: InteractiveHeader; flow_token: string; flow_id: string; payload: object }) => sendRequest<InteractiveMessage>({
+    sendFlow: (to: string, bodyText,buttonName: string, options: { footerText: string; header: InteractiveHeader; flow_token: string; flow_id: string; payload: object; context?:object }) => sendRequest<InteractiveMessage>({
       ...payloadBase,
       to,
       type: 'interactive',
+      context: options?.context,
       interactive: {
         body: {
           text: bodyText,
@@ -207,6 +218,22 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
             flow_action_payload: options.payload
           }
         },
+      },
+    }),
+    //ts-ignore
+    sendLocationRequest: (to: string, bodyText, options: {  context?:object }) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: "location_request_message",
+        body: {
+          text: bodyText,
+        },
+        action: {
+          name: "send_location"
+        }
       },
     }),
 
