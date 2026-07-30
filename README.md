@@ -216,6 +216,57 @@ bot.on('group_lifecycle_update', (event) => console.log(event));
 bot.on('group_participants_update', (event) => console.log(event));
 ```
 
+### Calling API
+
+Signaling and settings for [WhatsApp Cloud API Calling](https://developers.facebook.com/documentation/business-messaging/whatsapp/calling). Audio media still needs your own WebRTC stack or SIP PBX — this library only handles Graph call actions and webhooks.
+
+Prerequisites: messaging limit ≥ 2,000/day (or sandbox/test number), subscribe the app to the `calls` webhook field, and enable calling on the phone number via settings.
+
+```js
+// Enable calling on the business number
+await bot.updateCallSettings({
+  status: 'ENABLED',
+  call_icon_visibility: 'DEFAULT',
+  callback_permission_status: 'ENABLED',
+});
+
+await bot.getCallSettings();
+
+// Ask the user for permission to call them (customer service window)
+await bot.sendCallPermissionRequest(
+  to,
+  'We would like to call you about your order.',
+);
+
+await bot.getCallPermissions({ userWaId: to });
+
+// User-initiated: after calls webhook with event=connect + SDP offer
+bot.on('calls', async (event) => {
+  const call = event.data.calls?.[0];
+  if (call?.event === 'connect' && call.session) {
+    const answer = { sdp_type: 'answer', sdp: myWebRtcSdpAnswer };
+    await bot.preAcceptCall(call.id, answer);
+    await bot.acceptCall(call.id, answer);
+  }
+  if (call?.event === 'terminate') {
+    console.log('call ended', call.duration);
+  }
+});
+
+// Business-initiated (requires approved call permission + SDP offer from WebRTC)
+await bot.connectCall(to, { sdp_type: 'offer', sdp: myWebRtcSdpOffer });
+
+// Hang up / decline
+await bot.rejectCall(callId);
+await bot.terminateCall(callId);
+
+// Call button CTA (already available)
+await bot.sendVoiceCall(to, 'Call us on WhatsApp', { displayText: 'Call now' });
+
+// Permission reply arrives as a normal interactive message
+bot.on('call_permission_reply', (msg) => console.log(msg.data));
+```
+
 Customized express server ([read more below](#2-handling-incoming-messages)):
 
 ```js

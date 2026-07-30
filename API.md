@@ -40,6 +40,16 @@
   - [pinGroupMessage(groupId, messageId, [expirationDays])](#pin_group_message)
   - [unpinGroupMessage(groupId, messageId)](#unpin_group_message)
   - [sendGroupInviteTemplate(to, templateName, languageCode, groupId, [extraBodyParams])](#send_group_invite_template)
+  - [Calling API](#calling_api)
+  - [getCallSettings([options])](#get_call_settings)
+  - [updateCallSettings(calling)](#update_call_settings)
+  - [getCallPermissions(options)](#get_call_permissions)
+  - [sendCallPermissionRequest(to, bodyText, [options])](#send_call_permission_request)
+  - [preAcceptCall(callId, session)](#pre_accept_call)
+  - [acceptCall(callId, session, [options])](#accept_call)
+  - [rejectCall(callId)](#reject_call)
+  - [terminateCall(callId)](#terminate_call)
+  - [connectCall(to, session, [options])](#connect_call)
   - [startExpressServer([options])](#start_express_server)
   - [on(event, cb: (message) => void)](#on_event)
 
@@ -395,6 +405,81 @@ Pins a message in the group (1–30 days; default 7). Max 3 pinned messages.
 
 Sends a Template Library group invite link utility template. The `group_id` body parameter is injected automatically.
 
+<a name="calling_api"></a>
+
+### Calling API
+
+Graph signaling and settings for [WhatsApp Cloud API Calling](https://developers.facebook.com/documentation/business-messaging/whatsapp/calling). Requires calling enabled on the number, app subscribed to `calls`, and (for production) messaging limit ≥ 2,000. Media (WebRTC/SIP) is not handled by this library.
+
+<a name="get_call_settings"></a>
+
+### getCallSettings([options])
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options.includeSipCredentials] | `Boolean` | Include SIP credentials when SIP is configured. |
+
+<a name="update_call_settings"></a>
+
+### updateCallSettings(calling)
+
+Updates `POST /{phone-number-id}/settings` with a `calling` object (`status`, `call_hours`, `call_icon_visibility`, `callback_permission_status`, codecs, voicemail, SIP, etc.).
+
+<a name="get_call_permissions"></a>
+
+### getCallPermissions(options)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options.userWaId] | `String` | WhatsApp user phone number. |
+| [options.recipient] | `String` | Business-scoped user ID (BSUID). |
+
+<a name="send_call_permission_request"></a>
+
+### sendCallPermissionRequest(to, bodyText, [options])
+
+Sends an interactive `call_permission_request` message (customer service window).
+
+| Param | Type | Description |
+| --- | --- | --- |
+| to | `String` | User phone number. |
+| bodyText | `String` | Permission request body. |
+| [options.recipient] | `String` | Optional BSUID. |
+| [options.context] | `Object` | Reply context. |
+
+<a name="pre_accept_call"></a>
+
+### preAcceptCall(callId, session)
+
+Recommended for inbound calls. `session` is `{ sdp_type: 'answer', sdp: string }`.
+
+<a name="accept_call"></a>
+
+### acceptCall(callId, session, [options])
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options.bizOpaqueCallbackData] | `String` | Echoed on terminate webhook (max 512 chars). |
+
+<a name="reject_call"></a>
+
+### rejectCall(callId)
+
+<a name="terminate_call"></a>
+
+### terminateCall(callId)
+
+<a name="connect_call"></a>
+
+### connectCall(to, session, [options])
+
+Places a business-initiated call. Requires approved call permission. `session` is `{ sdp_type: 'offer', sdp: string }`.
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options.recipient] | `String` | Optional BSUID. |
+| [options.bizOpaqueCallbackData] | `String` | Tracking string. |
+
 <a name="start_express_server"></a>
 
 ### startExpressServer([options])
@@ -414,7 +499,7 @@ Sends a Template Library group invite link utility template. The `group_id` body
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| event | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` \| `group_lifecycle_update` \| `group_participants_update` \| `group_settings_update` \| `group_status_update` |
+| event | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` \| `call_permission_reply` \| `group_lifecycle_update` \| `group_participants_update` \| `group_settings_update` \| `group_status_update` \| `calls` |
 | message | `object` | | See below. |
 
 `message` object:

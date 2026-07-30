@@ -17,6 +17,8 @@ export enum PubSubEvents {
   group_participants_update = 'group_participants_update',
   group_settings_update = 'group_settings_update',
   group_status_update = 'group_status_update',
+  calls = 'calls',
+  call_permission_reply = 'call_permission_reply',
 }
 
 export type PubSubEvent = keyof typeof PubSubEvents;

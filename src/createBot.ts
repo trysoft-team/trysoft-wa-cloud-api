@@ -15,6 +15,7 @@ import {
   TextMessage,
   TypingIndicatorMessage,
 } from './messages.types';
+import { createCallingApi } from './calling';
 import { createGroupsApi } from './groups';
 import { getMediaDownload, sendRequestHelper } from './sendRequestHelper';
 import { ExpressServer, startExpressServer } from './startExpressServer';
@@ -34,7 +35,9 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
   // @ts-ignore
   const sendRequest = sendRequestHelper(fromPhoneNumberId, accessToken, version);
   const sendMedia = getMediaDownload(fromPhoneNumberId, accessToken, opts?.version);
-  const groups = createGroupsApi(fromPhoneNumberId, accessToken, version || 'v25.0');
+  const apiVersion = version || 'v25.0';
+  const groups = createGroupsApi(fromPhoneNumberId, accessToken, apiVersion);
+  const calling = createCallingApi(fromPhoneNumberId, accessToken, apiVersion);
 
   const getMediaPayload = (urlOrObjectId: string, options?: MediaBase) => ({
     ...(isURL(urlOrObjectId) ? { link: urlOrObjectId } : { id: urlOrObjectId }),
@@ -312,6 +315,22 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         },
       },
     }),
+    sendCallPermissionRequest: (to, bodyText, options) => sendRequest<InteractiveMessage>({
+      ...getPayloadBase(),
+      to,
+      type: 'interactive',
+      context: options?.context,
+      ...(options?.recipient ? { recipient: options.recipient } : {}),
+      interactive: {
+        type: 'call_permission_request',
+        body: {
+          text: bodyText,
+        },
+        action: {
+          name: 'call_permission_request',
+        },
+      },
+    }),
     sendAddress: (to, bodyText, country, options) => sendRequest<InteractiveMessage>({
       ...getPayloadBase(),
       to,
@@ -417,6 +436,16 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
     rejectJoinRequests: groups.rejectJoinRequests,
     removeParticipants: groups.removeParticipants,
     updateGroupSettings: groups.updateGroupSettings,
+
+    // Calling API — https://developers.facebook.com/documentation/business-messaging/whatsapp/calling
+    getCallSettings: calling.getCallSettings,
+    updateCallSettings: calling.updateCallSettings,
+    getCallPermissions: calling.getCallPermissions,
+    preAcceptCall: calling.preAcceptCall,
+    acceptCall: calling.acceptCall,
+    rejectCall: calling.rejectCall,
+    terminateCall: calling.terminateCall,
+    connectCall: calling.connectCall,
     pinGroupMessage: (groupId, messageId, expirationDays = 7) => sendRequest<PinMessage>({
       ...getPayloadBase('group'),
       to: groupId,

@@ -3,7 +3,7 @@ import { Server } from 'http';
 import PubSub from 'pubsub-js';
 import { FreeFormObject } from './utils/misc';
 import { PubSubEvent, PubSubEvents } from './utils/pubSub';
-import { GroupWebhookPayload, Message } from './createBot.types';
+import { CallWebhookPayload, GroupWebhookPayload, Message } from './createBot.types';
 
 const GROUP_WEBHOOK_FIELDS = new Set([
   PubSubEvents.group_lifecycle_update,
@@ -74,10 +74,18 @@ export const startExpressServer = (
       return;
     }
 
+    const field = req.body?.entry?.[0]?.changes?.[0]?.field;
+
     // Group metadata webhooks
-    const groupField = req.body?.entry?.[0]?.changes?.[0]?.field;
-    if (groupField && GROUP_WEBHOOK_FIELDS.has(groupField)) {
-      doGroupWebhook(req);
+    if (field && GROUP_WEBHOOK_FIELDS.has(field)) {
+      doFieldWebhook(req);
+      res.sendStatus(200);
+      return;
+    }
+
+    // Calling webhooks
+    if (field === PubSubEvents.calls) {
+      doFieldWebhook(req);
       res.sendStatus(200);
       return;
     }
@@ -92,9 +100,12 @@ export const startExpressServer = (
       }
 
       const wrappedField = req.body.whatsapp_webhook_payload?.entry?.[0]?.changes?.[0]?.field;
-      if (wrappedField && GROUP_WEBHOOK_FIELDS.has(wrappedField)) {
+      if (
+        wrappedField
+        && (GROUP_WEBHOOK_FIELDS.has(wrappedField) || wrappedField === PubSubEvents.calls)
+      ) {
         req.body = req.body.whatsapp_webhook_payload;
-        doGroupWebhook(req);
+        doFieldWebhook(req);
         res.sendStatus(200);
         return;
       }
@@ -115,24 +126,24 @@ export const startExpressServer = (
     res.sendStatus(200);
   });
 
-  function doGroupWebhook(req: any) {
+  function doFieldWebhook(req: any) {
     const change = req.body.entry[0].changes[0];
-    const field = change.field as PubSubEvent;
+    const webhookField = change.field as PubSubEvent;
     const value = change.value || {};
     const fromPhoneNumberId = value.metadata?.phone_number_id
       || value.phone_number_id
       || req.body.entry[0].id;
     const fromPhoneNumber = value.metadata?.display_phone_number;
 
-    const payload: GroupWebhookPayload = {
+    const payload: GroupWebhookPayload | CallWebhookPayload = {
       wab_pid: fromPhoneNumberId,
       wab_number: fromPhoneNumber,
-      field,
+      field: webhookField,
       data: value,
     };
 
     [
-      `bot-${fromPhoneNumberId}-${field}`,
+      `bot-${fromPhoneNumberId}-${webhookField}`,
     ].forEach((e) => PubSub.publish(e, payload));
   }
 
@@ -172,7 +183,10 @@ export const startExpressServer = (
       case 'interactive':
         event = rest.interactive.type;
         data = {
-          ...(rest.interactive.list_reply || rest.interactive.button_reply || rest.interactive.nfm_reply),
+          ...(rest.interactive.list_reply
+            || rest.interactive.button_reply
+            || rest.interactive.nfm_reply
+            || rest.interactive.call_permission_reply),
         };
         break;
 

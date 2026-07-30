@@ -245,6 +245,23 @@ describe('send functions', () => {
         expectSendMessageResult(result);
     });
 
+    test('sends call permission request', async () => {
+        try {
+            const result = await bot.sendCallPermissionRequest(
+                to,
+                'We would like to call you about your order.',
+            );
+            expectSendMessageResult(result);
+        } catch (err: any) {
+            // Permanent permission already approved — request cannot be resent (Meta 138017)
+            if (err?.error?.code === 138017) {
+                expect(err.error.message).toMatch(/call permission/i);
+                return;
+            }
+            throw err;
+        }
+    });
+
     /*
       test('sends flow', async () => {
         const result = await bot.sendFlow(
@@ -725,6 +742,54 @@ describe('server functions', () => {
                                 group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
                                 event: 'group_create',
                                 invite_link: 'https://chat.whatsapp.com/AbCdEf',
+                            },
+                        }],
+                    }],
+                })
+                .expect(200);
+        } catch (err) {
+            reject(err);
+        }
+    }));
+
+    test('listen for calls webhook', (): Promise<void> => new Promise(async (resolve, reject) => {
+        bot.on('calls', async (event: any) => {
+            try {
+                expect(event.field).toBe('calls');
+                expect(event.data.calls[0].id).toBe('wacid.test');
+                expect(event.data.calls[0].event).toBe('connect');
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+        try {
+            await request(app)
+                .post(webhookPath)
+                .send({
+                    object: 'whatsapp_business_account',
+                    entry: [{
+                        id: 'waba-id',
+                        changes: [{
+                            field: 'calls',
+                            value: {
+                                messaging_product: 'whatsapp',
+                                metadata: {
+                                    phone_number_id: fromPhoneNumberId,
+                                    display_phone_number: '263778039199',
+                                },
+                                calls: [{
+                                    id: 'wacid.test',
+                                    from: '263774166961',
+                                    to: '263778039199',
+                                    event: 'connect',
+                                    timestamp: '1640995200',
+                                    session: {
+                                        sdp_type: 'offer',
+                                        sdp: 'v=0',
+                                    },
+                                }],
                             },
                         }],
                     }],

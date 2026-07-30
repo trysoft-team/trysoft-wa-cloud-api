@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WhatsApp Cloud API Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="brand">trysoftwacloudapi</p>
+      <h1>Cloud API playground</h1>
+      <p class="lede">
+        Exercise messaging, groups, and WhatsApp calling against your live number.
+        Calling media uses browser WebRTC; everything else is Graph signaling.
+      </p>
+    </header>
+
+    <section class="panel status-panel">
+      <div class="row">
+        <span class="pill" id="connPill">SSE connecting…</span>
+        <span class="pill muted" id="pcPill">Peer idle</span>
+        <span class="pill muted" id="callPill">No active call</span>
+        <span class="pill muted" id="inboxPill">Inbox 0</span>
+      </div>
+      <p class="meta" id="healthMeta">Loading…</p>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="Playground sections">
+      <button type="button" class="tab active" data-tab="calls" role="tab" aria-selected="true">Calls</button>
+      <button type="button" class="tab" data-tab="messages" role="tab" aria-selected="false">Messages</button>
+      <button type="button" class="tab" data-tab="groups" role="tab" aria-selected="false">Groups</button>
+      <button type="button" class="tab" data-tab="inbox" role="tab" aria-selected="false">Inbox</button>
+    </nav>
+
+    <!-- CALLS -->
+    <section class="tab-panel active" data-panel="calls">
+      <div class="grid">
+        <article class="panel">
+          <h2>Inbound call</h2>
+          <p class="hint">When a user calls your business number, the SDP offer appears here.</p>
+          <dl class="kv">
+            <div><dt>Call ID</dt><dd id="inCallId">—</dd></div>
+            <div><dt>From</dt><dd id="inFrom">—</dd></div>
+            <div><dt>Event</dt><dd id="inEvent">—</dd></div>
+          </dl>
+          <div class="actions">
+            <button type="button" id="btnAnswer" class="primary" disabled>Answer</button>
+            <button type="button" id="btnReject" class="danger" disabled>Reject</button>
+            <button type="button" id="btnHangup" disabled>Hang up</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Business-initiated call</h2>
+          <p class="hint">Requires approved call permission. Uses your mic for the SDP offer.</p>
+          <label class="field">
+            <span>WhatsApp user (E.164, no +)</span>
+            <input id="toInput" type="text" inputmode="numeric" autocomplete="tel" placeholder="2637…" />
+          </label>
+          <div class="actions">
+            <button type="button" id="btnPermission">Request permission</button>
+            <button type="button" id="btnCheckPerm">Check permission</button>
+            <button type="button" id="btnConnect" class="primary">Call user</button>
+            <button type="button" id="btnVoiceCta">Send call button</button>
+          </div>
+        </article>
+      </div>
+
+      <section class="panel">
+        <div class="row between">
+          <h2>Call settings</h2>
+          <div class="actions compact">
+            <button type="button" id="btnEnableCalling">Enable calling</button>
+            <button type="button" id="btnRefreshSettings">Refresh</button>
+          </div>
+        </div>
+        <audio id="remoteAudio" autoplay playsinline></audio>
+        <pre id="settingsOut" class="log block">settings…</pre>
+      </section>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="tab-panel" data-panel="messages" hidden>
+      <div class="grid">
+        <article class="panel">
+          <h2>Send text</h2>
+          <label class="field">
+            <span>To</span>
+            <input id="msgTo" type="text" inputmode="numeric" placeholder="2637…" />
+          </label>
+          <label class="field">
+            <span>Message</span>
+            <textarea id="msgText" rows="3" placeholder="Hello from playground"></textarea>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="msgPreview" />
+            <span>Preview URL</span>
+          </label>
+          <div class="actions">
+            <button type="button" id="btnSendText" class="primary">Send text</button>
+            <button type="button" id="btnSendTemplate">hello_world template</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Interactive</h2>
+          <p class="hint">Buttons, list, CTA URL, and location request.</p>
+          <div class="actions">
+            <button type="button" id="btnButtons">Reply buttons</button>
+            <button type="button" id="btnList">List</button>
+            <button type="button" id="btnCta">CTA URL</button>
+            <button type="button" id="btnLocReq">Location request</button>
+          </div>
+          <hr class="rule" />
+          <h2>Media &amp; location</h2>
+          <label class="field">
+            <span>Image URL</span>
+            <input id="imgUrl" type="url" value="https://picsum.photos/400/300" />
+          </label>
+          <div class="actions">
+            <button type="button" id="btnImage">Send image</button>
+            <button type="button" id="btnLocation">Send location</button>
+          </div>
+        </article>
+      </div>
+
+      <article class="panel">
+        <h2>Reaction / typing / read</h2>
+        <p class="hint">Use an inbound message ID (wamid) from the Inbox tab.</p>
+        <div class="grid tight">
+          <label class="field">
+            <span>Message ID</span>
+            <input id="reactMsgId" type="text" placeholder="wamid.…" />
+          </label>
+          <label class="field">
+            <span>Emoji</span>
+            <input id="reactEmoji" type="text" value="👍" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" id="btnReact" class="primary">React</button>
+          <button type="button" id="btnTyping">Typing indicator</button>
+          <button type="button" id="btnRead">Mark read</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- GROUPS -->
+    <section class="tab-panel" data-panel="groups" hidden>
+      <div class="grid">
+        <article class="panel">
+          <h2>Create group</h2>
+          <p class="hint">Needs Groups API eligibility (OBA). Invite link arrives via webhook.</p>
+          <label class="field">
+            <span>Subject</span>
+            <input id="groupSubject" type="text" value="Support room" />
+          </label>
+          <label class="field">
+            <span>Description</span>
+            <input id="groupDesc" type="text" value="Playground group" />
+          </label>
+          <label class="field">
+            <span>Join approval</span>
+            <select id="groupApproval">
+              <option value="auto_approve">auto_approve</option>
+              <option value="approval_required">approval_required</option>
+            </select>
+          </label>
+          <div class="actions">
+            <button type="button" id="btnCreateGroup" class="primary">Create group</button>
+            <button type="button" id="btnListGroups">List groups</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Manage group</h2>
+          <label class="field">
+            <span>Group ID</span>
+            <input id="groupId" type="text" placeholder="Y2FwaV9ncm91cDo…" />
+          </label>
+          <label class="field">
+            <span>Group message</span>
+            <input id="groupMsg" type="text" value="Hello group from playground" />
+          </label>
+          <div class="actions">
+            <button type="button" id="btnGetGroup">Get group</button>
+            <button type="button" id="btnInviteLink">Invite link</button>
+            <button type="button" id="btnResetInvite">Reset invite</button>
+            <button type="button" id="btnGroupText" class="primary">Send to group</button>
+            <button type="button" id="btnDeleteGroup" class="danger">Delete group</button>
+          </div>
+          <hr class="rule" />
+          <label class="field">
+            <span>Message ID to pin</span>
+            <input id="pinMsgId" type="text" placeholder="wamid.…" />
+          </label>
+          <div class="actions">
+            <button type="button" id="btnPin">Pin (7 days)</button>
+            <button type="button" id="btnUnpin">Unpin</button>
+          </div>
+        </article>
+      </div>
+      <pre id="groupsOut" class="log panel">groups…</pre>
+    </section>
+
+    <!-- INBOX -->
+    <section class="tab-panel" data-panel="inbox" hidden>
+      <article class="panel">
+        <div class="row between">
+          <div>
+            <h2>Inbound messages</h2>
+            <p class="hint">Live webhook feed. Click a row to fill reaction / reply fields.</p>
+          </div>
+          <div class="actions compact">
+            <button type="button" id="btnClearInbox">Clear view</button>
+          </div>
+        </div>
+        <div id="inboxList" class="inbox"></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="row between">
+        <h2>Event log</h2>
+        <button type="button" id="btnClearLog">Clear log</button>
+      </div>
+      <pre id="log" class="log"></pre>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@ interface Message {
   messaging_product: 'whatsapp';
   recipient_type: 'individual' | 'group';
   to: string;
+  recipient?: string;
   context?: {
     message_id?: string;
   };
@@ -177,6 +178,13 @@ export interface InteractiveVoiceCallMessage {
   };
 }
 
+export interface InteractiveCallPermissionRequestMessage {
+  type: 'call_permission_request';
+  action: {
+    name: 'call_permission_request';
+  };
+}
+
 export interface InteractiveAddressMessage {
   type: 'address_message';
   action: {
@@ -251,6 +259,7 @@ type Interactive =
     | InteractiveListMessage
     | InteractiveCtaUrlMessage
     | InteractiveVoiceCallMessage
+    | InteractiveCallPermissionRequestMessage
     | InteractiveAddressMessage
   ))
   | InteractiveProductMessage

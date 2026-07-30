@@ -5,6 +5,7 @@ import { SendMessageResult } from './sendRequestHelper';
 import { FreeFormObject } from './utils/misc';
 import { PubSubEvent } from './utils/pubSub';
 import { GroupsApi, JoinApprovalMode } from './groups.types';
+import { CallingApi } from './calling.types';
 
 export type RecipientType = 'individual' | 'group';
 
@@ -27,7 +28,9 @@ export interface GroupWebhookPayload {
   data: FreeFormObject;
 }
 
-export interface Bot extends GroupsApi {
+export type CallWebhookPayload = GroupWebhookPayload;
+
+export interface Bot extends GroupsApi, CallingApi {
   startExpressServer: (options?: {
     app?: express.Application;
     useMiddleware?: (app: express.Application) => void;
@@ -35,7 +38,10 @@ export interface Bot extends GroupsApi {
     webhookPath?: string;
     webhookVerifyToken?: string;
   }) => Promise<{ server?: Server; app: Application; }>;
-  on: (event: PubSubEvent, cb: (message: Message | GroupWebhookPayload) => void) => string;
+  on: (
+    event: PubSubEvent,
+    cb: (message: Message | GroupWebhookPayload | CallWebhookPayload) => void,
+  ) => string;
   unsubscribe: (token: string) => string | boolean;
   markRead: (id: string) => Promise<SendMessageResult>
   getMediaDownload: (id : string, save_path : string) => Promise<object>
@@ -166,6 +172,15 @@ export interface Bot extends GroupsApi {
       displayText?: string;
       ttlMinutes?: number;
       payload?: string;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendCallPermissionRequest: (
+    to: string,
+    bodyText: string,
+    options?: {
+      recipient?: string;
       context?: object;
     },
   ) => Promise<SendMessageResult>;
