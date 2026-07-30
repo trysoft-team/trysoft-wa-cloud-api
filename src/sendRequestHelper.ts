@@ -49,7 +49,7 @@ export const sendRequestHelper = (
     };
   } catch (err: unknown) {
     // eslint-disable-next-line no-console
-    console.log(err);
+    console.error(err);
     if ((err as any).response) {
       throw (err as AxiosError)?.response?.data;
     // } else if ((err as any).request) {

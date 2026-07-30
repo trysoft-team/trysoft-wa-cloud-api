@@ -91,6 +91,81 @@ const result = await bot.sendLocation(to, 40.7128, -74.0060, {
 
 // Send template
 const result = await bot.sendTemplate(to, 'hello_world', 'en_us');
+
+// Send reply buttons
+const result = await bot.sendReplyButtons(
+  to,
+  'How can we help you?',
+  {
+    support: 'Support',
+    sales: 'Sales',
+    pricing: 'Pricing',
+  },
+  {
+    footerText: 'Choose an option',
+    header: {
+      type: 'text',
+      text: 'Menu',
+    },
+  },
+);
+```
+
+Additional message types:
+
+```js
+// React to a message
+const result = await bot.sendReaction(to, messageId, '👍');
+
+// Show typing indicator (also marks the message as read)
+const result = await bot.sendTypingIndicator(messageId);
+
+// CTA URL button
+const result = await bot.sendCtaUrl(
+  to,
+  'Check out our website',
+  'Visit site',
+  'https://example.com',
+  { footerText: 'Opens in browser' },
+);
+
+// WhatsApp voice call button
+const result = await bot.sendVoiceCall(to, 'Call us on WhatsApp for faster help', {
+  displayText: 'Call now',
+  ttlMinutes: 10080,
+});
+
+// Address request (India only)
+const result = await bot.sendAddress(
+  to,
+  'Thanks for your order! Where should we deliver?',
+  'IN',
+  { values: { name: 'Customer', phone_number: '+91xxxxxxxxxx' } },
+);
+
+// Single product
+const result = await bot.sendProduct(to, catalogId, productRetailerId, {
+  bodyText: 'Check out this item',
+});
+
+// Multi-product list
+const result = await bot.sendProductList(
+  to,
+  catalogId,
+  'Our picks',
+  'Browse these products',
+  [
+    {
+      title: 'Section 1',
+      product_items: [{ product_retailer_id: 'sku-1' }],
+    },
+  ],
+);
+
+// Full catalog
+const result = await bot.sendCatalog(to, 'Browse our catalog', {
+  thumbnailProductRetailerId: 'sku-1',
+});
 ```
 
 Customized express server ([read more below](#2-handling-incoming-messages)):

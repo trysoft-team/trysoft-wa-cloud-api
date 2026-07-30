@@ -15,6 +15,16 @@
   - [sendContacts(to, contacts)](#send_contacts)
   - [sendReplyButtons(to, bodyText, buttons, [options])](#send_reply_buttons)
   - [sendList(to, buttonName, bodyText, sections, [options])](#send_list)
+  - [sendFlow(to, bodyText, buttonName, [options])](#send_flow)
+  - [sendLocationRequest(to, bodyText, [options])](#send_location_request)
+  - [sendReaction(to, messageId, emoji)](#send_reaction)
+  - [sendTypingIndicator(messageId)](#send_typing_indicator)
+  - [sendCtaUrl(to, bodyText, displayText, url, [options])](#send_cta_url)
+  - [sendVoiceCall(to, bodyText, [options])](#send_voice_call)
+  - [sendAddress(to, bodyText, country, [options])](#send_address)
+  - [sendProduct(to, catalogId, productRetailerId, [options])](#send_product)
+  - [sendProductList(to, catalogId, headerText, bodyText, sections, [options])](#send_product_list)
+  - [sendCatalog(to, bodyText, [options])](#send_catalog)
   - [startExpressServer([options])](#start_express_server)
   - [on(event, cb: (message) => void)](#on_event)
 
@@ -165,6 +175,113 @@ Same as `sendText` above.
 | [options.footerText] | `Object` | | The footer content. Emojis, markdown, and links are supported. Maximum length: 60 characters. |
 | [contacts.header] | `Array of Objects` | | See [Official Documentation](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#header-object). |
 
+<a name="send_flow"></a>
+
+### sendFlow(to, bodyText, buttonName, [options])
+
+Sends an interactive WhatsApp Flow message.
+
+<a name="send_location_request"></a>
+
+### sendLocationRequest(to, bodyText, [options])
+
+Sends an interactive location request message.
+
+<a name="send_reaction"></a>
+
+### sendReaction(to, messageId, emoji)
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| messageId | `String` | | WhatsApp message ID to react to. |
+| emoji | `String` | | Emoji reaction (e.g. `👍`). Empty string removes the reaction. |
+
+<a name="send_typing_indicator"></a>
+
+### sendTypingIndicator(messageId)
+
+Marks the inbound message as read and shows a typing indicator.
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| messageId | `String` | | WhatsApp message ID of the inbound message. |
+
+<a name="send_cta_url"></a>
+
+### sendCtaUrl(to, bodyText, displayText, url, [options])
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| bodyText | `String` | | Body text. |
+| displayText | `String` | | Button label (max 20 characters). |
+| url | `String` | | Destination URL. |
+| [options] | `Object` | | Optional `footerText`, `header`, `context`. |
+
+<a name="send_voice_call"></a>
+
+### sendVoiceCall(to, bodyText, [options])
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| bodyText | `String` | | Body text. |
+| [options.displayText] | `String` | | Call button label (default `Call Now`). |
+| [options.ttlMinutes] | `Number` | | CTA TTL in minutes (1–43200). |
+| [options.payload] | `String` | | Tracking payload returned in calls webhooks. |
+
+<a name="send_address"></a>
+
+### sendAddress(to, bodyText, country, [options])
+
+Address request messages (currently India / `IN` only per Meta).
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| bodyText | `String` | | Body text. |
+| country | `String` | | ISO country code (e.g. `IN`). |
+| [options.values] | `Object` | | Prefill address field values. |
+| [options.savedAddresses] | `Array` | | Previously saved addresses. |
+| [options.validationErrors] | `Object` | | Field validation errors for re-prompting. |
+
+<a name="send_product"></a>
+
+### sendProduct(to, catalogId, productRetailerId, [options])
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| catalogId | `String` | | Meta Commerce catalog ID. |
+| productRetailerId | `String` | | Product SKU / retailer ID in the catalog. |
+| [options.bodyText] | `String` | | Optional body text. |
+| [options.footerText] | `String` | | Optional footer text. |
+
+<a name="send_product_list"></a>
+
+### sendProductList(to, catalogId, headerText, bodyText, sections, [options])
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| catalogId | `String` | | Meta Commerce catalog ID. |
+| headerText | `String` | | Required text header. |
+| bodyText | `String` | | Body text. |
+| sections | `Array` | | Sections with `title` and `product_items: [{ product_retailer_id }]`. |
+| [options.footerText] | `String` | | Optional footer text. |
+
+<a name="send_catalog"></a>
+
+### sendCatalog(to, bodyText, [options])
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| to | `String` | | WhatsApp ID or phone number for the person you want to send a message to. |
+| bodyText | `String` | | Body text. |
+| [options.thumbnailProductRetailerId] | `String` | | Product SKU used for the thumbnail header. |
+| [options.footerText] | `String` | | Optional footer text. |
+
 <a name="start_express_server"></a>
 
 ### startExpressServer([options])
@@ -184,7 +301,7 @@ Same as `sendText` above.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| event | `string` | | `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `button_reply` \| `list_reply`  |
+| event | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` |
 | message | `object` | | See below. |
 
 `message` object:
@@ -194,7 +311,7 @@ Same as `sendText` above.
 | from | `string` | | Whatsapp ID/phone number of Sender. |
 | id | `string` | | ID of created message. |
 | timestamp | `string` | | Unix epoch of created message. |
-| type | `string` | | `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `button_reply` \| `list_reply`  |
+| type | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` |
 | data | `object` | | Varies depending on the event. e.g for text, it will be `{ text: string; }` |
 
 ## Resources

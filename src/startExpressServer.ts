@@ -60,6 +60,26 @@ export const startExpressServer = (
   }
 
   app.post(webhookPath, async (req, res) => {
+
+
+    //Meta Messages
+    if (req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
+      doMessage(req)
+      res.sendStatus(200);
+      return
+    }
+
+    //Cloud Server Messages
+    if (req.body?.whatsapp_webhook_payload){
+      if (req.body.whatsapp_webhook_payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
+        req.body = req.body.whatsapp_webhook_payload
+        doMessage(req)
+        res.sendStatus(200);
+        return
+      }
+      res.sendStatus(200);
+    }
+
     if (!req.body.object || !req.body.entry?.[0]?.changes?.[0]?.value) {
       res.sendStatus(400);
       return;
@@ -69,13 +89,17 @@ export const startExpressServer = (
       return;
     }
 
+    res.sendStatus(200);
+  });
+
+  function doMessage(req : any) {
     const {
       from,
       id,
       timestamp,
       type,
       ...rest
-    } = req.body.entry[0].changes[0].value.messages[0];
+    } = req.body.entry[0].changes[0].value?.messages[0];
     const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
     const fromPhoneNumber = req.body.entry[0].changes[0].value.metadata.display_phone_number;
 
@@ -85,7 +109,7 @@ export const startExpressServer = (
     switch (type) {
       case 'text':
         event = PubSubEvents.text;
-        data = { text: rest.text?.body };
+        data = {text: rest.text?.body};
         break;
 
       case 'image':
@@ -96,6 +120,7 @@ export const startExpressServer = (
       case 'location':
       case 'order':
       case 'contacts':
+      case 'reaction':
         event = PubSubEvents[type as PubSubEvent];
         data = rest[type];
         break;
@@ -103,6 +128,15 @@ export const startExpressServer = (
         event = rest.interactive.type;
         data = {
           ...(rest.interactive.list_reply || rest.interactive.button_reply || rest.interactive.nfm_reply),
+        };
+        break;
+
+      // Template quick-reply button (type: button) — normalize as button_reply
+      case 'button':
+        event = PubSubEvents.button_reply;
+        data = {
+          id: rest.button?.payload,
+          title: rest.button?.text,
         };
         break;
 
@@ -139,9 +173,7 @@ export const startExpressServer = (
         `bot-${fromPhoneNumberId}-${event}`,
       ].forEach((e) => PubSub.publish(e, payload));
     }
-
-    res.sendStatus(200);
-  });
+  }
 
   if (options?.app) {
     resolve({ app });
