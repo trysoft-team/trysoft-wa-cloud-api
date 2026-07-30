@@ -1,13 +1,21 @@
 import isURL from 'validator/lib/isURL';
 import PubSub from 'pubsub-js';
-import { ICreateBot } from './createBot.types';
+import {ICreateBot} from './createBot.types';
 import {
-  ContactMessage, InteractiveMessage, LocationMessage,
-  MediaBase, MediaMessage, TemplateMessage,
-  TextMessage, MarkRead, InteractiveHeader,
+  ContactMessage,
+  InteractiveHeader,
+  InteractiveMessage,
+  LocationMessage,
+  MarkRead,
+  MediaBase,
+  MediaMessage,
+  ReactionMessage,
+  TemplateMessage,
+  TextMessage,
+  TypingIndicatorMessage,
 } from './messages.types';
-import { sendRequestHelper, getMediaDownload } from './sendRequestHelper';
-import { ExpressServer, startExpressServer } from './startExpressServer';
+import {getMediaDownload, sendRequestHelper} from './sendRequestHelper';
+import {ExpressServer, startExpressServer} from './startExpressServer';
 
 interface PaylodBase {
   messaging_product: 'whatsapp';
@@ -43,11 +51,10 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
     },
     on: (event, cb) => {
       // eslint-disable-next-line
-      const token = PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, function(_, data) {
+      return PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, function (_, data) {
         // eslint-disable-next-line
         cb(data)
       });
-      return token;
     },
     unsubscribe: (token) => PubSub.unsubscribe(token),
     markRead: (id: string) => sendRequest<MarkRead>({
@@ -234,6 +241,162 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         action: {
           name: "send_location"
         }
+      },
+    }),
+    sendReaction: (to, messageId, emoji) => sendRequest<ReactionMessage>({
+      ...payloadBase,
+      to,
+      type: 'reaction',
+      reaction: {
+        message_id: messageId,
+        emoji,
+      },
+    }),
+    sendTypingIndicator: (messageId) => sendRequest<TypingIndicatorMessage>({
+      messaging_product: 'whatsapp',
+      status: 'read',
+      message_id: messageId,
+      typing_indicator: {
+        type: 'text',
+      },
+    }),
+    sendCtaUrl: (to, bodyText, displayText, url, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'cta_url',
+        body: {
+          text: bodyText,
+        },
+        ...(options?.footerText
+          ? { footer: { text: options.footerText } }
+          : {}),
+        header: options?.header,
+        action: {
+          name: 'cta_url',
+          parameters: {
+            display_text: displayText,
+            url,
+          },
+        },
+      },
+    }),
+    sendVoiceCall: (to, bodyText, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'voice_call',
+        body: {
+          text: bodyText,
+        },
+        action: {
+          name: 'voice_call',
+          ...((options?.displayText || options?.ttlMinutes != null || options?.payload)
+            ? {
+              parameters: {
+                ...(options?.displayText ? { display_text: options.displayText } : {}),
+                ...(options?.ttlMinutes != null ? { ttl_minutes: options.ttlMinutes } : {}),
+                ...(options?.payload ? { payload: options.payload } : {}),
+              },
+            }
+            : {}),
+        },
+      },
+    }),
+    sendAddress: (to, bodyText, country, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'address_message',
+        body: {
+          text: bodyText,
+        },
+        ...(options?.footerText
+          ? { footer: { text: options.footerText } }
+          : {}),
+        header: options?.header,
+        action: {
+          name: 'address_message',
+          parameters: {
+            country,
+            ...(options?.values ? { values: options.values } : {}),
+            ...(options?.savedAddresses ? { saved_addresses: options.savedAddresses } : {}),
+            ...(options?.validationErrors ? { validation_errors: options.validationErrors } : {}),
+          },
+        },
+      },
+    }),
+    sendProduct: (to, catalogId, productRetailerId, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'product',
+        ...(options?.bodyText
+          ? { body: { text: options.bodyText } }
+          : {}),
+        ...(options?.footerText
+          ? { footer: { text: options.footerText } }
+          : {}),
+        action: {
+          catalog_id: catalogId,
+          product_retailer_id: productRetailerId,
+        },
+      },
+    }),
+    sendProductList: (to, catalogId, headerText, bodyText, sections, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'product_list',
+        header: {
+          type: 'text',
+          text: headerText,
+        },
+        body: {
+          text: bodyText,
+        },
+        ...(options?.footerText
+          ? { footer: { text: options.footerText } }
+          : {}),
+        action: {
+          catalog_id: catalogId,
+          sections,
+        },
+      },
+    }),
+    sendCatalog: (to, bodyText, options) => sendRequest<InteractiveMessage>({
+      ...payloadBase,
+      to,
+      type: 'interactive',
+      context: options?.context,
+      interactive: {
+        type: 'catalog_message',
+        body: {
+          text: bodyText,
+        },
+        ...(options?.footerText
+          ? { footer: { text: options.footerText } }
+          : {}),
+        action: {
+          name: 'catalog_message',
+          ...(options?.thumbnailProductRetailerId
+            ? {
+              parameters: {
+                thumbnail_product_retailer_id: options.thumbnailProductRetailerId,
+              },
+            }
+            : {}),
+        },
       },
     }),
 

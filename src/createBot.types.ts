@@ -116,6 +116,92 @@ export interface Bot {
       },
   ) => Promise<SendMessageResult>;
 
+  sendReaction: (
+    to: string,
+    messageId: string,
+    emoji: string,
+  ) => Promise<SendMessageResult>;
+
+  sendTypingIndicator: (messageId: string) => Promise<SendMessageResult>;
+
+  sendCtaUrl: (
+    to: string,
+    bodyText: string,
+    displayText: string,
+    url: string,
+    options?: {
+      footerText?: string;
+      header?: InteractiveHeader;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendVoiceCall: (
+    to: string,
+    bodyText: string,
+    options?: {
+      displayText?: string;
+      ttlMinutes?: number;
+      payload?: string;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendAddress: (
+    to: string,
+    bodyText: string,
+    country: string,
+    options?: {
+      values?: Record<string, string>;
+      savedAddresses?: {
+        id: string;
+        value: Record<string, string>;
+      }[];
+      validationErrors?: Record<string, string>;
+      footerText?: string;
+      header?: InteractiveHeader;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendProduct: (
+    to: string,
+    catalogId: string,
+    productRetailerId: string,
+    options?: {
+      bodyText?: string;
+      footerText?: string;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendProductList: (
+    to: string,
+    catalogId: string,
+    headerText: string,
+    bodyText: string,
+    sections: {
+      title: string;
+      product_items: {
+        product_retailer_id: string;
+      }[];
+    }[],
+    options?: {
+      footerText?: string;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
+  sendCatalog: (
+    to: string,
+    bodyText: string,
+    options?: {
+      thumbnailProductRetailerId?: string;
+      footerText?: string;
+      context?: object;
+    },
+  ) => Promise<SendMessageResult>;
+
 }
 
 export type ICreateBot = (

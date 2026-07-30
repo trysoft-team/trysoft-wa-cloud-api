@@ -190,6 +190,61 @@ describe('send functions', () => {
 
         expectSendMessageResult(result);
     });
+
+    test('sends reaction', async () => {
+        const textResult = await bot.sendText(to, 'React to this message');
+        expectSendMessageResult(textResult);
+
+        const result = await bot.sendReaction(to, textResult.messageId!, '👍');
+        expectSendMessageResult(result);
+    });
+
+    test('sends typing indicator', async () => {
+        // Meta only accepts inbound message IDs for typing/read receipts
+        const inboundMessageId = process.env.INBOUND_MESSAGE_ID;
+        if (!inboundMessageId) {
+            // eslint-disable-next-line no-console
+            console.warn('Skipping typing indicator: set INBOUND_MESSAGE_ID to an inbound wamid');
+            return;
+        }
+
+        const result = await bot.sendTypingIndicator(inboundMessageId);
+        expect(result && typeof result === 'object').toBe(true);
+        expect(result.success).toBe(true);
+    });
+
+    test('sends cta url', async () => {
+        const result = await bot.sendCtaUrl(
+            to,
+            'Check out our website',
+            'Visit site',
+            'https://example.com',
+            {
+                footerText: 'Opens in browser',
+                header: {
+                    type: 'text',
+                    text: 'CTA',
+                },
+            },
+        );
+
+        expectSendMessageResult(result);
+    });
+
+    test('sends voice call', async () => {
+        const result = await bot.sendVoiceCall(
+            to,
+            'Call us on WhatsApp for faster help',
+            {
+                displayText: 'Call now',
+                ttlMinutes: 10080,
+                payload: 'test-call-payload',
+            },
+        );
+
+        expectSendMessageResult(result);
+    });
+
     /*
       test('sends flow', async () => {
         const result = await bot.sendFlow(
@@ -219,7 +274,7 @@ describe('server functions', () => {
     let app: Application | undefined;
 
     beforeAll(async () => {
-        ({server, app} = await bot.startExpressServer({webhookVerifyToken}));
+        ({server, app} = await bot.startExpressServer({webhookVerifyToken, webhookPath}));
     });
 
     afterAll((): Promise<void> => new Promise((resolve) => {
@@ -419,6 +474,30 @@ describe('server functions', () => {
                 from: '12345678',
                 id: 'wamid.abcd',
                 timestamp: '1640995200',
+                type: 'button',
+                button: {
+                    payload: 'CARD_REPLACEMENT_REJECT',
+                    text: 'Reject Request',
+                },
+                context: {
+                    from: '12345678',
+                    id: 'wamid.abcd',
+                },
+            },
+            {
+                from: '12345678',
+                id: 'wamid.abcd',
+                timestamp: '1640995200',
+                type: 'reaction',
+                reaction: {
+                    message_id: 'wamid.original',
+                    emoji: '👍',
+                },
+            },
+            {
+                from: '12345678',
+                id: 'wamid.abcd',
+                timestamp: '1640995200',
                 type: 'interactive',
                 interactive: {
                     type: 'nfm_reply',
@@ -541,6 +620,12 @@ describe('server functions', () => {
 
                     expect(typeof data.context.from).toBe('string');
                     expect(typeof data.context.id).toBe('string');
+                    break;
+                case 'reaction':
+                    expect(data).toHaveProperty('message_id');
+                    expect(data).toHaveProperty('emoji');
+                    expect(typeof data.message_id).toBe('string');
+                    expect(typeof data.emoji).toBe('string');
                     break;
                 case "nfm_reply":
                     expect(data).toHaveProperty('name');

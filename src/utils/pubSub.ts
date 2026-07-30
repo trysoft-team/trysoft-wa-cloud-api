@@ -9,6 +9,7 @@ export enum PubSubEvents {
   location = 'location',
   contacts = 'contacts',
   order = 'order',
+  reaction = 'reaction',
   button_reply = 'button_reply',
   list_reply = 'list_reply',
   nfm_reply = 'nfm_reply'

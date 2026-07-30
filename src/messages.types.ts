@@ -154,7 +154,108 @@ export interface InteractiveListMessage {
   };
 }
 
-type Interactive = InteractiveBase & (InteractiveReplyButton | InteractiveFlowMessage | InteractiveLocationRequestMessage |InteractiveListMessage);
+export interface InteractiveCtaUrlMessage {
+  type: 'cta_url';
+  action: {
+    name: 'cta_url';
+    parameters: {
+      display_text: string;
+      url: string;
+    };
+  };
+}
+
+export interface InteractiveVoiceCallMessage {
+  type: 'voice_call';
+  action: {
+    name: 'voice_call';
+    parameters?: {
+      display_text?: string;
+      ttl_minutes?: number;
+      payload?: string;
+    };
+  };
+}
+
+export interface InteractiveAddressMessage {
+  type: 'address_message';
+  action: {
+    name: 'address_message';
+    parameters: {
+      country: string;
+      values?: Record<string, string>;
+      saved_addresses?: {
+        id: string;
+        value: Record<string, string>;
+      }[];
+      validation_errors?: Record<string, string>;
+    };
+  };
+}
+
+export interface InteractiveProductMessage {
+  type: 'product';
+  body?: {
+    text: string;
+  };
+  footer?: {
+    text: string;
+  };
+  action: {
+    catalog_id: string;
+    product_retailer_id: string;
+  };
+}
+
+export interface InteractiveProductListMessage {
+  type: 'product_list';
+  header: InteractiveHeaderText;
+  body: {
+    text: string;
+  };
+  footer?: {
+    text: string;
+  };
+  action: {
+    catalog_id: string;
+    sections: {
+      title: string;
+      product_items: {
+        product_retailer_id: string;
+      }[];
+    }[];
+  };
+}
+
+export interface InteractiveCatalogMessage {
+  type: 'catalog_message';
+  body: {
+    text: string;
+  };
+  footer?: {
+    text: string;
+  };
+  action: {
+    name: 'catalog_message';
+    parameters?: {
+      thumbnail_product_retailer_id?: string;
+    };
+  };
+}
+
+type Interactive =
+  | (InteractiveBase & (
+    InteractiveReplyButton
+    | InteractiveFlowMessage
+    | InteractiveLocationRequestMessage
+    | InteractiveListMessage
+    | InteractiveCtaUrlMessage
+    | InteractiveVoiceCallMessage
+    | InteractiveAddressMessage
+  ))
+  | InteractiveProductMessage
+  | InteractiveProductListMessage
+  | InteractiveCatalogMessage;
 
 export interface Location {
   longitude: number;
@@ -314,6 +415,23 @@ export interface TextMessage extends Message {
 export interface VideoMessage extends Message {
   type: 'video';
   video: Media;
+}
+
+export interface ReactionMessage extends Message {
+  type: 'reaction';
+  reaction: {
+    message_id: string;
+    emoji: string;
+  };
+}
+
+export interface TypingIndicatorMessage {
+  messaging_product: 'whatsapp';
+  status: 'read';
+  message_id: string;
+  typing_indicator: {
+    type: 'text';
+  };
 }
 
 export type MediaMessage = AudioMessage | DocumentMessage | ImageMessage |
