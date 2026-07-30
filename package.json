@@ -80,6 +80,6 @@
   },
   "homepage": "https://github.com/trysoft-team/trysoft-wa-cloud-api#readme",
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   }
 }
