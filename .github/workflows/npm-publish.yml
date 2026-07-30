@@ -6,6 +6,7 @@ on:
       - release
     tags:
       - v*
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,18 +16,27 @@ jobs:
         node-version: [18.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup node ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org
+          cache: npm
 
-      - name: npm publish
+      - name: Install and build
         run: |
           npm ci
           npm run build
-          npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}
-          npm publish --access public
+
+      - name: Verify npm auth
+        run: npm whoami
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: npm publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
           CI: true
