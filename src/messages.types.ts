@@ -4,7 +4,7 @@ import type { RequireAtLeastOne } from 'type-fest';
 
 interface Message {
   messaging_product: 'whatsapp';
-  recipient_type: 'individual';
+  recipient_type: 'individual' | 'group';
   to: string;
   context?: {
     message_id?: string;
@@ -311,6 +311,11 @@ interface ParameterVideo {
   video: Media;
 }
 
+interface ParameterGroupId {
+  type: 'group_id';
+  group_id: string;
+}
+
 interface TemplateComponentTypeHeader {
   type: 'header';
 }
@@ -319,7 +324,7 @@ interface TemplateComponentTypeBody {
   type: 'body';
   parameters: (
     ParameterText | ParameterCurrency | ParameterDateTime |
-    ParameterImage | ParameterDocument | ParameterVideo
+    ParameterImage | ParameterDocument | ParameterVideo | ParameterGroupId
   )[];
 }
 
@@ -422,6 +427,15 @@ export interface ReactionMessage extends Message {
   reaction: {
     message_id: string;
     emoji: string;
+  };
+}
+
+export interface PinMessage extends Message {
+  type: 'pin';
+  pin: {
+    type: 'pin' | 'unpin';
+    message_id: string;
+    expiration_days?: number;
   };
 }
 

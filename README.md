@@ -168,6 +168,54 @@ const result = await bot.sendCatalog(to, 'Browse our catalog', {
 });
 ```
 
+### Groups API
+
+Requires an [Official Business Account (OBA)](https://developers.facebook.com/documentation/business-messaging/whatsapp/groups). Subscribe your app to `group_lifecycle_update`, `group_participants_update`, `group_settings_update`, and `group_status_update`.
+
+If the phone number has not been allow-listed for Groups, every call throws with error code `131215` (`This phone number is not eligible to access Groups APIs`). Check eligibility in the [Groups getting started guide](https://developers.facebook.com/docs/whatsapp/cloud-api/groups/getting-started).
+
+```js
+// Create a group (invite link arrives via group_lifecycle_update webhook)
+await bot.createGroup({
+  subject: 'Support room',
+  description: 'Customer support',
+  joinApprovalMode: 'auto_approve',
+});
+
+// Send text / media / templates to a group
+await bot.sendText(groupId, 'Hello group', { recipientType: 'group' });
+await bot.sendImage(groupId, 'https://picsum.photos/200/300', {
+  recipientType: 'group',
+  caption: 'Photo',
+});
+await bot.sendTemplate(groupId, 'hello_world', 'en_US', undefined, {
+  recipientType: 'group',
+});
+
+// Invite a user with a group invite link template
+await bot.sendGroupInviteTemplate(to, 'group_invite_template', 'en', groupId);
+
+// Pin / unpin
+await bot.pinGroupMessage(groupId, messageId, 7);
+await bot.unpinGroupMessage(groupId, messageId);
+
+// Manage
+await bot.getInviteLink(groupId);
+await bot.listGroups();
+await bot.getGroup(groupId, ['subject', 'description', 'participants']);
+await bot.removeParticipants(groupId, ['263774166961']);
+await bot.deleteGroup(groupId);
+
+// Listen for group messages and metadata
+bot.on('message', (msg) => {
+  if (msg.group_id) {
+    console.log('group message', msg.group_id, msg);
+  }
+});
+bot.on('group_lifecycle_update', (event) => console.log(event));
+bot.on('group_participants_update', (event) => console.log(event));
+```
+
 Customized express server ([read more below](#2-handling-incoming-messages)):
 
 ```js

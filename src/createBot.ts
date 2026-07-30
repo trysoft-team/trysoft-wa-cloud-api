@@ -1,6 +1,6 @@
 import isURL from 'validator/lib/isURL';
 import PubSub from 'pubsub-js';
-import {ICreateBot} from './createBot.types';
+import { ICreateBot } from './createBot.types';
 import {
   ContactMessage,
   InteractiveHeader,
@@ -9,31 +9,32 @@ import {
   MarkRead,
   MediaBase,
   MediaMessage,
+  PinMessage,
   ReactionMessage,
   TemplateMessage,
   TextMessage,
   TypingIndicatorMessage,
 } from './messages.types';
-import {getMediaDownload, sendRequestHelper} from './sendRequestHelper';
-import {ExpressServer, startExpressServer} from './startExpressServer';
+import { createGroupsApi } from './groups';
+import { getMediaDownload, sendRequestHelper } from './sendRequestHelper';
+import { ExpressServer, startExpressServer } from './startExpressServer';
 
-interface PaylodBase {
-  messaging_product: 'whatsapp';
-  recipient_type: 'individual';
-}
+type RecipientType = 'individual' | 'group';
 
-const payloadBase: PaylodBase = {
-  messaging_product: 'whatsapp',
-  recipient_type: 'individual',
-};
+const getPayloadBase = (recipientType: RecipientType = 'individual') => ({
+  messaging_product: 'whatsapp' as const,
+  recipient_type: recipientType,
+});
 
 // @ts-ignore
 export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
   let expressServer: ExpressServer;
 
+  const version = opts?.version ? opts.version : process.env.VERSION;
   // @ts-ignore
-  const sendRequest = sendRequestHelper(fromPhoneNumberId, accessToken, opts?.version ? opts.version : process.env.VERSION);
+  const sendRequest = sendRequestHelper(fromPhoneNumberId, accessToken, version);
   const sendMedia = getMediaDownload(fromPhoneNumberId, accessToken, opts?.version);
+  const groups = createGroupsApi(fromPhoneNumberId, accessToken, version || 'v25.0');
 
   const getMediaPayload = (urlOrObjectId: string, options?: MediaBase) => ({
     ...(isURL(urlOrObjectId) ? { link: urlOrObjectId } : { id: urlOrObjectId }),
@@ -62,12 +63,12 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       status: 'read',
       message_id: id,
       typing_indicator: {
-        "type": "text"
-      }
+        type: 'text',
+      },
     }),
-    getMediaDownload: (id : string, save_path : string) => sendMedia(id, save_path),
+    getMediaDownload: (id: string, save_path: string) => sendMedia(id, save_path),
     sendText: (to, text, options) => sendRequest<TextMessage>({
-      ...payloadBase,
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'text',
       context: options?.context,
@@ -80,40 +81,40 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       return this.sendText(to, text, options);
     },
     sendImage: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
-      ...payloadBase,
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'image',
       context: options?.context,
       image: getMediaPayload(urlOrObjectId, options),
     }),
     sendDocument: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
-      ...payloadBase,
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'document',
       context: options?.context,
       document: getMediaPayload(urlOrObjectId, options),
     }),
-    sendAudio: (to, urlOrObjectId) => sendRequest<MediaMessage>({
-      ...payloadBase,
+    sendAudio: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'audio',
       audio: getMediaPayload(urlOrObjectId),
     }),
     sendVideo: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
-      ...payloadBase,
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'video',
       context: options?.context,
       video: getMediaPayload(urlOrObjectId, options),
     }),
-    sendSticker: (to, urlOrObjectId) => sendRequest<MediaMessage>({
-      ...payloadBase,
+    sendSticker: (to, urlOrObjectId, options) => sendRequest<MediaMessage>({
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'sticker',
       sticker: getMediaPayload(urlOrObjectId),
     }),
     sendLocation: (to, latitude, longitude, options) => sendRequest<LocationMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'location',
       context: options?.context,
@@ -124,8 +125,8 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         address: options?.address,
       },
     }),
-    sendTemplate: (to, name, languageCode, components) => sendRequest<TemplateMessage>({
-      ...payloadBase,
+    sendTemplate: (to, name, languageCode, components, options) => sendRequest<TemplateMessage>({
+      ...getPayloadBase(options?.recipientType),
       to,
       type: 'template',
       template: {
@@ -137,13 +138,13 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendContacts: (to, contacts) => sendRequest<ContactMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'contacts',
       contacts,
     }),
     sendReplyButtons: (to, bodyText, buttons, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -155,8 +156,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
           ? {
             footer: { text: options?.footerText },
           }
-          : {}
-        ),
+          : {}),
         header: options?.header,
         type: 'button',
         action: {
@@ -171,7 +171,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendList: (to, buttonName, bodyText, sections, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -183,8 +183,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
           ? {
             footer: { text: options?.footerText },
           }
-          : {}
-        ),
+          : {}),
         header: options?.header,
         type: 'list',
         action: {
@@ -196,9 +195,16 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         },
       },
     }),
-    //ts-ignore
-    sendFlow: (to: string, bodyText,buttonName: string, options: { footerText: string; header: InteractiveHeader; flow_token: string; flow_id: string; payload: object; context?:object }) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+    // ts-ignore
+    sendFlow: (to: string, bodyText, buttonName: string, options: {
+      footerText: string;
+      header: InteractiveHeader;
+      flow_token: string;
+      flow_id: string;
+      payload: object;
+      context?: object;
+    }) => sendRequest<InteractiveMessage>({
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -207,44 +213,43 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
           text: bodyText,
         },
         ...(options?.footerText
-                ? {
-                  footer: { text: options?.footerText },
-                }
-                : {}
-        ),
+          ? {
+            footer: { text: options?.footerText },
+          }
+          : {}),
         header: options?.header,
         type: 'flow',
-        action : {
-          name: "flow",
-          parameters : {
-            flow_message_version: "3",
-            flow_token:  options.flow_token,
-            flow_id:  options.flow_id,
+        action: {
+          name: 'flow',
+          parameters: {
+            flow_message_version: '3',
+            flow_token: options.flow_token,
+            flow_id: options.flow_id,
             flow_cta: buttonName,
-            flow_action: "navigate",
-            flow_action_payload: options.payload
-          }
+            flow_action: 'navigate',
+            flow_action_payload: options.payload,
+          },
         },
       },
     }),
-    //ts-ignore
-    sendLocationRequest: (to: string, bodyText, options: {  context?:object }) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+    // ts-ignore
+    sendLocationRequest: (to: string, bodyText, options: { context?: object }) => sendRequest<InteractiveMessage>({
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
       interactive: {
-        type: "location_request_message",
+        type: 'location_request_message',
         body: {
           text: bodyText,
         },
         action: {
-          name: "send_location"
-        }
+          name: 'send_location',
+        },
       },
     }),
     sendReaction: (to, messageId, emoji) => sendRequest<ReactionMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'reaction',
       reaction: {
@@ -261,7 +266,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendCtaUrl: (to, bodyText, displayText, url, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -284,7 +289,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendVoiceCall: (to, bodyText, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -308,7 +313,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendAddress: (to, bodyText, country, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -333,7 +338,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendProduct: (to, catalogId, productRetailerId, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -352,7 +357,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendProductList: (to, catalogId, headerText, bodyText, sections, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -375,7 +380,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     sendCatalog: (to, bodyText, options) => sendRequest<InteractiveMessage>({
-      ...payloadBase,
+      ...getPayloadBase(),
       to,
       type: 'interactive',
       context: options?.context,
@@ -400,5 +405,56 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
 
+    // Groups API — https://developers.facebook.com/documentation/business-messaging/whatsapp/groups
+    createGroup: groups.createGroup,
+    deleteGroup: groups.deleteGroup,
+    getGroup: groups.getGroup,
+    listGroups: groups.listGroups,
+    getInviteLink: groups.getInviteLink,
+    resetInviteLink: groups.resetInviteLink,
+    getJoinRequests: groups.getJoinRequests,
+    approveJoinRequests: groups.approveJoinRequests,
+    rejectJoinRequests: groups.rejectJoinRequests,
+    removeParticipants: groups.removeParticipants,
+    updateGroupSettings: groups.updateGroupSettings,
+    pinGroupMessage: (groupId, messageId, expirationDays = 7) => sendRequest<PinMessage>({
+      ...getPayloadBase('group'),
+      to: groupId,
+      type: 'pin',
+      pin: {
+        type: 'pin',
+        message_id: messageId,
+        expiration_days: expirationDays,
+      },
+    }),
+    unpinGroupMessage: (groupId, messageId) => sendRequest<PinMessage>({
+      ...getPayloadBase('group'),
+      to: groupId,
+      type: 'pin',
+      pin: {
+        type: 'unpin',
+        message_id: messageId,
+      },
+    }),
+    sendGroupInviteTemplate: (to, templateName, languageCode, groupId, extraBodyParams) => sendRequest<TemplateMessage>({
+      ...getPayloadBase(),
+      to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: {
+          code: languageCode,
+        },
+                components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'group_id', group_id: groupId },
+              ...((extraBodyParams || []) as any[]),
+            ],
+          },
+        ],
+      },
+    }),
   };
 };

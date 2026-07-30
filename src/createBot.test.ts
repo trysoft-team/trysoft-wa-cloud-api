@@ -352,6 +352,14 @@ describe('server functions', () => {
             },
             {
                 from: '12345678',
+                group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+                id: 'wamid.group',
+                timestamp: '1640995200',
+                type: 'text',
+                text: {body: 'Hello from group'},
+            },
+            {
+                from: '12345678',
                 id: 'wamid.abcd',
                 timestamp: '1640995200',
                 type: 'image',
@@ -531,7 +539,8 @@ describe('server functions', () => {
 
         // TODO: listen for each event, e.g. bot.on('text', ...)
 
-        bot.on('message', async (message) => {
+        bot.on('message', async (raw) => {
+            const message = raw as import('./createBot.types').Message;
             expect(message && typeof message === 'object').toBe(true);
             expect(message).toHaveProperty('from');
             expect(message).toHaveProperty('id');
@@ -558,6 +567,11 @@ describe('server functions', () => {
                 case 'text':
                     expect(data).toHaveProperty('text');
                     expect(typeof data.text).toBe('string');
+                    if (message.id === 'wamid.group') {
+                        expect(message.group_id).toBe(
+                            'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+                        );
+                    }
                     break;
 
                 case 'image':
@@ -676,6 +690,46 @@ describe('server functions', () => {
                     })
                     .expect(200);
             });
+        } catch (err) {
+            reject(err);
+        }
+    }));
+
+    test('listen for group lifecycle webhook', (): Promise<void> => new Promise(async (resolve, reject) => {
+        bot.on('group_lifecycle_update', async (event: any) => {
+            try {
+                expect(event.field).toBe('group_lifecycle_update');
+                expect(event.data).toHaveProperty('group_id');
+                expect(event.data.group_id).toBe('Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD');
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+        try {
+            await request(app)
+                .post(webhookPath)
+                .send({
+                    object: 'whatsapp_business_account',
+                    entry: [{
+                        id: 'waba-id',
+                        changes: [{
+                            field: 'group_lifecycle_update',
+                            value: {
+                                messaging_product: 'whatsapp',
+                                metadata: {
+                                    phone_number_id: fromPhoneNumberId,
+                                    display_phone_number: '263778039199',
+                                },
+                                group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+                                event: 'group_create',
+                                invite_link: 'https://chat.whatsapp.com/AbCdEf',
+                            },
+                        }],
+                    }],
+                })
+                .expect(200);
         } catch (err) {
             reject(err);
         }

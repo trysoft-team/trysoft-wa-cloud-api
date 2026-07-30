@@ -4,6 +4,9 @@ import { Contact, InteractiveHeader, TemplateComponent } from './messages.types'
 import { SendMessageResult } from './sendRequestHelper';
 import { FreeFormObject } from './utils/misc';
 import { PubSubEvent } from './utils/pubSub';
+import { GroupsApi, JoinApprovalMode } from './groups.types';
+
+export type RecipientType = 'individual' | 'group';
 
 export interface Message {
   wab_pid: string;
@@ -14,9 +17,17 @@ export interface Message {
   timestamp: string;
   type: PubSubEvent;
   data: FreeFormObject; // TODO: properly define interfaces for each type
+  group_id?: string;
 }
 
-export interface Bot {
+export interface GroupWebhookPayload {
+  wab_pid?: string;
+  wab_number?: string;
+  field: PubSubEvent;
+  data: FreeFormObject;
+}
+
+export interface Bot extends GroupsApi {
   startExpressServer: (options?: {
     app?: express.Application;
     useMiddleware?: (app: express.Application) => void;
@@ -24,33 +35,42 @@ export interface Bot {
     webhookPath?: string;
     webhookVerifyToken?: string;
   }) => Promise<{ server?: Server; app: Application; }>;
-  on: (event: PubSubEvent, cb: (message: Message) => void) => string;
+  on: (event: PubSubEvent, cb: (message: Message | GroupWebhookPayload) => void) => string;
   unsubscribe: (token: string) => string | boolean;
   markRead: (id: string) => Promise<SendMessageResult>
   getMediaDownload: (id : string, save_path : string) => Promise<object>
   sendText: (to: string, text: string, options?: {
     preview_url?: boolean;
     context?: object;
+    recipientType?: RecipientType;
   }) => Promise<SendMessageResult>;
   sendMessage: (to: string, text: string, options?: {
     preview_url?: boolean;
     context?: object;
+    recipientType?: RecipientType;
   }) => Promise<SendMessageResult>;
   sendImage: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
     context?: object;
+    recipientType?: RecipientType;
   }) => Promise<SendMessageResult>;
   sendDocument: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
     filename?: string;
     context?: object;
+    recipientType?: RecipientType;
   }) => Promise<SendMessageResult>;
-  sendAudio: (to: string, urlOrObjectId: string) => Promise<SendMessageResult>;
+  sendAudio: (to: string, urlOrObjectId: string, options?: {
+    recipientType?: RecipientType;
+  }) => Promise<SendMessageResult>;
   sendVideo: (to: string, urlOrObjectId: string, options?: {
     caption?: string;
     context?: object;
+    recipientType?: RecipientType;
   }) => Promise<SendMessageResult>;
-  sendSticker: (to: string, urlOrObjectId: string) => Promise<SendMessageResult>;
+  sendSticker: (to: string, urlOrObjectId: string, options?: {
+    recipientType?: RecipientType;
+  }) => Promise<SendMessageResult>;
   sendLocation: (to: string, latitude: number, longitude: number, options?: {
     name?: string;
     address?: string;
@@ -61,6 +81,9 @@ export interface Bot {
     name: string,
     languageCode: string,
     components?: TemplateComponent[],
+    options?: {
+      recipientType?: RecipientType;
+    },
   ) => Promise<SendMessageResult>;
   sendContacts: (to: string, contacts: Contact[]) => Promise<SendMessageResult>;
   sendReplyButtons: (
@@ -202,6 +225,27 @@ export interface Bot {
     },
   ) => Promise<SendMessageResult>;
 
+  pinGroupMessage: (
+    groupId: string,
+    messageId: string,
+    expirationDays?: number,
+  ) => Promise<SendMessageResult>;
+
+  unpinGroupMessage: (
+    groupId: string,
+    messageId: string,
+  ) => Promise<SendMessageResult>;
+
+  sendGroupInviteTemplate: (
+    to: string,
+    templateName: string,
+    languageCode: string,
+    groupId: string,
+    extraBodyParams?: {
+      type: string;
+      [key: string]: unknown;
+    }[],
+  ) => Promise<SendMessageResult>;
 }
 
 export type ICreateBot = (
@@ -211,3 +255,5 @@ export type ICreateBot = (
     version?: string;
   },
 ) => Bot;
+
+export type { JoinApprovalMode };

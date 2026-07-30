@@ -3,7 +3,14 @@ import { Server } from 'http';
 import PubSub from 'pubsub-js';
 import { FreeFormObject } from './utils/misc';
 import { PubSubEvent, PubSubEvents } from './utils/pubSub';
-import { Message } from './createBot.types';
+import { GroupWebhookPayload, Message } from './createBot.types';
+
+const GROUP_WEBHOOK_FIELDS = new Set([
+  PubSubEvents.group_lifecycle_update,
+  PubSubEvents.group_participants_update,
+  PubSubEvents.group_settings_update,
+  PubSubEvents.group_status_update,
+]);
 
 export interface ServerOptions {
   app?: Application;
@@ -60,24 +67,40 @@ export const startExpressServer = (
   }
 
   app.post(webhookPath, async (req, res) => {
-
-
-    //Meta Messages
+    // Meta Messages
     if (req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
-      doMessage(req)
+      doMessage(req);
       res.sendStatus(200);
-      return
+      return;
     }
 
-    //Cloud Server Messages
-    if (req.body?.whatsapp_webhook_payload){
-      if (req.body.whatsapp_webhook_payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
-        req.body = req.body.whatsapp_webhook_payload
-        doMessage(req)
-        res.sendStatus(200);
-        return
-      }
+    // Group metadata webhooks
+    const groupField = req.body?.entry?.[0]?.changes?.[0]?.field;
+    if (groupField && GROUP_WEBHOOK_FIELDS.has(groupField)) {
+      doGroupWebhook(req);
       res.sendStatus(200);
+      return;
+    }
+
+    // Cloud Server Messages
+    if (req.body?.whatsapp_webhook_payload) {
+      if (req.body.whatsapp_webhook_payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
+        req.body = req.body.whatsapp_webhook_payload;
+        doMessage(req);
+        res.sendStatus(200);
+        return;
+      }
+
+      const wrappedField = req.body.whatsapp_webhook_payload?.entry?.[0]?.changes?.[0]?.field;
+      if (wrappedField && GROUP_WEBHOOK_FIELDS.has(wrappedField)) {
+        req.body = req.body.whatsapp_webhook_payload;
+        doGroupWebhook(req);
+        res.sendStatus(200);
+        return;
+      }
+
+      res.sendStatus(200);
+      return;
     }
 
     if (!req.body.object || !req.body.entry?.[0]?.changes?.[0]?.value) {
@@ -92,12 +115,34 @@ export const startExpressServer = (
     res.sendStatus(200);
   });
 
-  function doMessage(req : any) {
+  function doGroupWebhook(req: any) {
+    const change = req.body.entry[0].changes[0];
+    const field = change.field as PubSubEvent;
+    const value = change.value || {};
+    const fromPhoneNumberId = value.metadata?.phone_number_id
+      || value.phone_number_id
+      || req.body.entry[0].id;
+    const fromPhoneNumber = value.metadata?.display_phone_number;
+
+    const payload: GroupWebhookPayload = {
+      wab_pid: fromPhoneNumberId,
+      wab_number: fromPhoneNumber,
+      field,
+      data: value,
+    };
+
+    [
+      `bot-${fromPhoneNumberId}-${field}`,
+    ].forEach((e) => PubSub.publish(e, payload));
+  }
+
+  function doMessage(req: any) {
     const {
       from,
       id,
       timestamp,
       type,
+      group_id: groupId,
       ...rest
     } = req.body.entry[0].changes[0].value?.messages[0];
     const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
@@ -109,7 +154,7 @@ export const startExpressServer = (
     switch (type) {
       case 'text':
         event = PubSubEvents.text;
-        data = {text: rest.text?.body};
+        data = { text: rest.text?.body };
         break;
 
       case 'image':
@@ -166,6 +211,7 @@ export const startExpressServer = (
         timestamp,
         type: event,
         data,
+        ...(groupId ? { group_id: groupId } : {}),
       };
 
       [

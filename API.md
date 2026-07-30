@@ -25,6 +25,21 @@
   - [sendProduct(to, catalogId, productRetailerId, [options])](#send_product)
   - [sendProductList(to, catalogId, headerText, bodyText, sections, [options])](#send_product_list)
   - [sendCatalog(to, bodyText, [options])](#send_catalog)
+  - [Groups API](#groups_api)
+  - [createGroup(options)](#create_group)
+  - [listGroups([options])](#list_groups)
+  - [getGroup(groupId, [fields])](#get_group)
+  - [deleteGroup(groupId)](#delete_group)
+  - [getInviteLink(groupId)](#get_invite_link)
+  - [resetInviteLink(groupId)](#reset_invite_link)
+  - [getJoinRequests(groupId)](#get_join_requests)
+  - [approveJoinRequests(groupId, joinRequestIds)](#approve_join_requests)
+  - [rejectJoinRequests(groupId, joinRequestIds)](#reject_join_requests)
+  - [removeParticipants(groupId, users)](#remove_participants)
+  - [updateGroupSettings(groupId, options)](#update_group_settings)
+  - [pinGroupMessage(groupId, messageId, [expirationDays])](#pin_group_message)
+  - [unpinGroupMessage(groupId, messageId)](#unpin_group_message)
+  - [sendGroupInviteTemplate(to, templateName, languageCode, groupId, [extraBodyParams])](#send_group_invite_template)
   - [startExpressServer([options])](#start_express_server)
   - [on(event, cb: (message) => void)](#on_event)
 
@@ -282,6 +297,104 @@ Address request messages (currently India / `IN` only per Meta).
 | [options.thumbnailProductRetailerId] | `String` | | Product SKU used for the thumbnail header. |
 | [options.footerText] | `String` | | Optional footer text. |
 
+<a name="groups_api"></a>
+
+### Groups API
+
+Requires an Official Business Account (OBA). See [Meta Groups docs](https://developers.facebook.com/documentation/business-messaging/whatsapp/groups).
+
+Group-supported outbound types: text, media, and templates via `options.recipientType: 'group'` on `sendText`, `sendImage`, `sendDocument`, `sendAudio`, `sendVideo`, `sendSticker`, and `sendTemplate`.
+
+Inbound group chat messages include `group_id` on the `message` object. Group metadata events: `group_lifecycle_update`, `group_participants_update`, `group_settings_update`, `group_status_update`.
+
+<a name="create_group"></a>
+
+### createGroup(options)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options.subject | `String` | Required. Max 128 characters. |
+| [options.description] | `String` | Optional. Max 2048 characters. |
+| [options.joinApprovalMode] | `String` | `auto_approve` (default) or `approval_required`. |
+
+<a name="list_groups"></a>
+
+### listGroups([options])
+
+Lists active groups for the business phone number.
+
+<a name="get_group"></a>
+
+### getGroup(groupId, [fields])
+
+| Param | Type | Description |
+| --- | --- | --- |
+| groupId | `String` | Group ID. |
+| [fields] | `String[]` | e.g. `['subject','description','participants','join_approval_mode']`. |
+
+<a name="delete_group"></a>
+
+### deleteGroup(groupId)
+
+Deletes the group and removes all participants.
+
+<a name="get_invite_link"></a>
+
+### getInviteLink(groupId)
+
+Returns `{ invite_link }`.
+
+<a name="reset_invite_link"></a>
+
+### resetInviteLink(groupId)
+
+Invalidates previous invite links and returns a new one.
+
+<a name="get_join_requests"></a>
+
+### getJoinRequests(groupId)
+
+Lists open join requests when approval mode is enabled.
+
+<a name="approve_join_requests"></a>
+
+### approveJoinRequests(groupId, joinRequestIds)
+
+<a name="reject_join_requests"></a>
+
+### rejectJoinRequests(groupId, joinRequestIds)
+
+<a name="remove_participants"></a>
+
+### removeParticipants(groupId, users)
+
+`users` is an array of phone numbers / WhatsApp IDs.
+
+<a name="update_group_settings"></a>
+
+### updateGroupSettings(groupId, options)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [options.subject] | `String` | New subject. |
+| [options.description] | `String` | New description. |
+
+<a name="pin_group_message"></a>
+
+### pinGroupMessage(groupId, messageId, [expirationDays])
+
+Pins a message in the group (1–30 days; default 7). Max 3 pinned messages.
+
+<a name="unpin_group_message"></a>
+
+### unpinGroupMessage(groupId, messageId)
+
+<a name="send_group_invite_template"></a>
+
+### sendGroupInviteTemplate(to, templateName, languageCode, groupId, [extraBodyParams])
+
+Sends a Template Library group invite link utility template. The `group_id` body parameter is injected automatically.
+
 <a name="start_express_server"></a>
 
 ### startExpressServer([options])
@@ -301,7 +414,7 @@ Address request messages (currently India / `IN` only per Meta).
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| event | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` |
+| event | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` \| `group_lifecycle_update` \| `group_participants_update` \| `group_settings_update` \| `group_status_update` |
 | message | `object` | | See below. |
 
 `message` object:
@@ -311,8 +424,9 @@ Address request messages (currently India / `IN` only per Meta).
 | from | `string` | | Whatsapp ID/phone number of Sender. |
 | id | `string` | | ID of created message. |
 | timestamp | `string` | | Unix epoch of created message. |
-| type | `string` | | `message` \| `text` \| `image` \| `document` \| `audio` \| `video` \| `sticker` \| `location` \| `contacts` \| `order` \| `reaction` \| `button_reply` \| `list_reply` \| `nfm_reply` |
+| type | `string` | | See `event` values above (chat events). |
 | data | `object` | | Varies depending on the event. e.g for text, it will be `{ text: string; }` |
+| [group_id] | `string` | | Present when the inbound message was sent in a group. |
 
 ## Resources
 

@@ -12,7 +12,11 @@ export enum PubSubEvents {
   reaction = 'reaction',
   button_reply = 'button_reply',
   list_reply = 'list_reply',
-  nfm_reply = 'nfm_reply'
+  nfm_reply = 'nfm_reply',
+  group_lifecycle_update = 'group_lifecycle_update',
+  group_participants_update = 'group_participants_update',
+  group_settings_update = 'group_settings_update',
+  group_status_update = 'group_status_update',
 }
 
 export type PubSubEvent = keyof typeof PubSubEvents;
