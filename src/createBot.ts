@@ -53,13 +53,12 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
 
       return expressServer;
     },
-    on: (event, cb) => {
+    on: (event, cb) =>
       // eslint-disable-next-line
-      return PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, function (_, data) {
+       PubSub.subscribe(`bot-${fromPhoneNumberId}-${event}`, function (_, data) {
         // eslint-disable-next-line
         cb(data)
-      });
-    },
+      }),
     unsubscribe: (token) => PubSub.unsubscribe(token),
     markRead: (id: string) => sendRequest<MarkRead>({
       messaging_product: 'whatsapp',
@@ -236,7 +235,11 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
       },
     }),
     // ts-ignore
-    sendLocationRequest: (to: string, bodyText, options: { context?: object }) => sendRequest<InteractiveMessage>({
+    sendLocationRequest: (
+      to: string,
+      bodyText,
+      options: { context?: object },
+    ) => sendRequest<InteractiveMessage>({
       ...getPayloadBase(),
       to,
       type: 'interactive',
@@ -375,7 +378,14 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         },
       },
     }),
-    sendProductList: (to, catalogId, headerText, bodyText, sections, options) => sendRequest<InteractiveMessage>({
+    sendProductList: (
+      to,
+      catalogId,
+      headerText,
+      bodyText,
+      sections,
+      options,
+    ) => sendRequest<InteractiveMessage>({
       ...getPayloadBase(),
       to,
       type: 'interactive',
@@ -465,7 +475,13 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         message_id: messageId,
       },
     }),
-    sendGroupInviteTemplate: (to, templateName, languageCode, groupId, extraBodyParams) => sendRequest<TemplateMessage>({
+    sendGroupInviteTemplate: (
+      to,
+      templateName,
+      languageCode,
+      groupId,
+      extraBodyParams,
+    ) => sendRequest<TemplateMessage>({
       ...getPayloadBase(),
       to,
       type: 'template',
@@ -474,7 +490,7 @@ export const createBot: ICreateBot = (fromPhoneNumberId, accessToken, opts) => {
         language: {
           code: languageCode,
         },
-                components: [
+        components: [
           {
             type: 'body',
             parameters: [

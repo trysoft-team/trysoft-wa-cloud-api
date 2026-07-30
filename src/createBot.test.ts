@@ -1,19 +1,19 @@
 import request from 'supertest';
-import {Server} from 'http';
-import {Application} from 'express';
-import {createBot} from '.';
-import {FreeFormObject} from './utils/misc';
-import {PubSubEvents} from './utils/pubSub';
+import { Server } from 'http';
+import { Application } from 'express';
+import { createBot } from '.';
+import { FreeFormObject } from './utils/misc';
+import { PubSubEvents } from './utils/pubSub';
 
 const expectSendMessageResult = (result: any): void => {
-    expect(result && typeof result === 'object').toBe(true);
-    expect(result).toHaveProperty('messageId');
-    expect(result).toHaveProperty('phoneNumber');
-    expect(result).toHaveProperty('whatsappId');
+  expect(result && typeof result === 'object').toBe(true);
+  expect(result).toHaveProperty('messageId');
+  expect(result).toHaveProperty('phoneNumber');
+  expect(result).toHaveProperty('whatsappId');
 
-    expect(typeof result.messageId).toBe('string');
-    expect(typeof result.phoneNumber).toBe('string');
-    expect(typeof result.whatsappId).toBe('string');
+  expect(typeof result.messageId).toBe('string');
+  expect(typeof result.phoneNumber).toBe('string');
+  expect(typeof result.whatsappId).toBe('string');
 };
 
 /**
@@ -21,9 +21,9 @@ const expectSendMessageResult = (result: any): void => {
  * https://stackoverflow.com/a/1527820
  */
 const getRandomInt = (_min: number, _max: number): number => {
-    const min = Math.ceil(_min);
-    const max = Math.floor(_max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  const min = Math.ceil(_min);
+  const max = Math.floor(_max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
 const fromPhoneNumberId = process.env.FROM_PHONE_NUMBER_ID;
@@ -34,235 +34,234 @@ const webhookVerifyToken = process.env.WEBHOOK_VERIFY_TOKEN;
 const webhookPath = process.env.WEBHOOK_PATH;
 
 if (!fromPhoneNumberId || !accessToken || !to || !webhookVerifyToken || !webhookPath) {
-    throw new Error('Missing env variables');
+  throw new Error('Missing env variables');
 }
 
 describe('send functions', () => {
-    const bot = createBot(fromPhoneNumberId, accessToken, {version});
+  const bot = createBot(fromPhoneNumberId, accessToken, { version });
 
-    test('sends text', async () => {
-        const result = await bot.sendText(to, 'Hello world', {
-            preview_url: true,
-        });
-
-        expectSendMessageResult(result);
+  test('sends text', async () => {
+    const result = await bot.sendText(to, 'Hello world', {
+      preview_url: true,
     });
 
-    test('sends message', async () => {
-        const result = await bot.sendMessage(to, 'Hello world', {
-            preview_url: true,
-        });
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
+  test('sends message', async () => {
+    const result = await bot.sendMessage(to, 'Hello world', {
+      preview_url: true,
     });
 
-    test('sends image', async () => {
-        const result = await bot.sendImage(to, 'https://picsum.photos/200/300', {
-            caption: 'Random jpg',
-        });
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
+  test('sends image', async () => {
+    const result = await bot.sendImage(to, 'https://picsum.photos/200/300', {
+      caption: 'Random jpg',
     });
 
-    test('sends document', async () => {
-        const result = await bot.sendDocument(to, 'http://www.africau.edu/images/default/sample.pdf', {
-            caption: 'Random pdf',
-            filename: 'myfile.pdf',
-        });
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
+  test('sends document', async () => {
+    const result = await bot.sendDocument(to, 'http://www.africau.edu/images/default/sample.pdf', {
+      caption: 'Random pdf',
+      filename: 'myfile.pdf',
     });
 
-    test('sends audio', async () => {
-        const result = await bot.sendAudio(to, 'https://samplelib.com/lib/preview/mp3/sample-3s.mp3');
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
+  test('sends audio', async () => {
+    const result = await bot.sendAudio(to, 'https://samplelib.com/lib/preview/mp3/sample-3s.mp3');
+
+    expectSendMessageResult(result);
+  });
+
+  test('sends video', async () => {
+    const result = await bot.sendVideo(to, 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4', {
+      caption: 'Random mp4',
     });
 
-    test('sends video', async () => {
-        const result = await bot.sendVideo(to, 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4', {
-            caption: 'Random mp4',
-        });
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
+  // TODO: not working
+  // https://faq.whatsapp.com/general/how-to-create-stickers-for-whatsapp/?lang=en
+  // transparent 512x512 gif
+  test('sends sticker', async () => {
+    const result = await bot.sendSticker(to, 'https://i.gifer.com/ZXHC.gif');
+
+    expectSendMessageResult(result);
+  });
+
+  test('sends location', async () => {
+    const result = await bot.sendLocation(to, 40.7128, -74.0060, {
+      name: 'New York',
     });
 
-    // TODO: not working
-    // https://faq.whatsapp.com/general/how-to-create-stickers-for-whatsapp/?lang=en
-    // transparent 512x512 gif
-    test('sends sticker', async () => {
-        const result = await bot.sendSticker(to, 'https://i.gifer.com/ZXHC.gif');
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
-    });
+  test('sends template', async () => {
+    const result = await bot.sendTemplate(to, 'hello_world', 'en_us');
 
-    test('sends location', async () => {
-        const result = await bot.sendLocation(to, 40.7128, -74.0060, {
-            name: 'New York',
-        });
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
-    });
+  test('sends contacts', async () => {
+    const result = await bot.sendContacts(to, [{
+      name: {
+        formatted_name: 'John Doe',
+        first_name: 'John',
+      },
+      phones: [{
+        type: 'HOME',
+        phone: '0712345678',
+      }],
+      emails: [{
+        type: 'HOME',
+        email: 'random@random.com',
+      }],
+    }]);
 
-    test('sends template', async () => {
-        const result = await bot.sendTemplate(to, 'hello_world', 'en_us');
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
-    });
+  test('sends reply button', async () => {
+    const result = await bot.sendReplyButtons(
+      to,
+      'Random body text',
+      {
+        random_id_1: 'Button 1',
+        random_id_2: 'Button 2',
+      },
+      {
+        footerText: 'Random footer text',
+        header: {
+          type: 'text',
+          text: 'Random header text',
+        },
+      },
+    );
 
-    test('sends contacts', async () => {
-        const result = await bot.sendContacts(to, [{
-            name: {
-                formatted_name: 'John Doe',
-                first_name: 'John',
-            },
-            phones: [{
-                type: 'HOME',
-                phone: '0712345678',
-            }],
-            emails: [{
-                type: 'HOME',
-                email: 'random@random.com',
-            }],
-        }]);
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
-    });
+  test('sends list', async () => {
+    const result = await bot.sendList(
+      to,
+      'Click me',
+      'Random body text',
+      {
+        'Section 1': [
+          {
+            id: 'random_id_1',
+            title: 'Item 1',
+            description: 'Random description',
+          },
+          {
+            id: 'random_id_2',
+            title: 'Item 2',
+          },
+        ],
+        'Section 2': [
+          {
+            id: 'random_id_3',
+            title: 'Item 3',
+          },
+          {
+            id: 'random_id_4',
+            title: 'Item 4',
+            description: 'Random description',
+          },
+        ],
+      },
+      {
+        footerText: 'Random footer text',
+        header: {
+          type: 'text',
+          text: 'Random header text',
+        },
+      },
+    );
 
-    test('sends reply button', async () => {
-        const result = await bot.sendReplyButtons(
-            to,
-            'Random body text',
-            {
-                random_id_1: 'Button 1',
-                random_id_2: 'Button 2',
-            },
-            {
-                footerText: 'Random footer text',
-                header: {
-                    type: 'text',
-                    text: 'Random header text',
-                },
-            },
-        );
+    expectSendMessageResult(result);
+  });
 
-        expectSendMessageResult(result);
-    });
+  test('sends reaction', async () => {
+    const textResult = await bot.sendText(to, 'React to this message');
+    expectSendMessageResult(textResult);
 
-    test('sends list', async () => {
+    const result = await bot.sendReaction(to, textResult.messageId!, '👍');
+    expectSendMessageResult(result);
+  });
 
-        const result = await bot.sendList(
-            to,
-            'Click me',
-            'Random body text',
-            {
-                'Section 1': [
-                    {
-                        id: 'random_id_1',
-                        title: 'Item 1',
-                        description: 'Random description',
-                    },
-                    {
-                        id: 'random_id_2',
-                        title: 'Item 2',
-                    },
-                ],
-                'Section 2': [
-                    {
-                        id: 'random_id_3',
-                        title: 'Item 3',
-                    },
-                    {
-                        id: 'random_id_4',
-                        title: 'Item 4',
-                        description: 'Random description',
-                    },
-                ],
-            },
-            {
-                footerText: 'Random footer text',
-                header: {
-                    type: 'text',
-                    text: 'Random header text',
-                },
-            },
-        );
+  test('sends typing indicator', async () => {
+    // Meta only accepts inbound message IDs for typing/read receipts
+    const inboundMessageId = process.env.INBOUND_MESSAGE_ID;
+    if (!inboundMessageId) {
+      // eslint-disable-next-line no-console
+      console.warn('Skipping typing indicator: set INBOUND_MESSAGE_ID to an inbound wamid');
+      return;
+    }
 
-        expectSendMessageResult(result);
-    });
+    const result = await bot.sendTypingIndicator(inboundMessageId);
+    expect(result && typeof result === 'object').toBe(true);
+    expect(result.success).toBe(true);
+  });
 
-    test('sends reaction', async () => {
-        const textResult = await bot.sendText(to, 'React to this message');
-        expectSendMessageResult(textResult);
+  test('sends cta url', async () => {
+    const result = await bot.sendCtaUrl(
+      to,
+      'Check out our website',
+      'Visit site',
+      'https://example.com',
+      {
+        footerText: 'Opens in browser',
+        header: {
+          type: 'text',
+          text: 'CTA',
+        },
+      },
+    );
 
-        const result = await bot.sendReaction(to, textResult.messageId!, '👍');
-        expectSendMessageResult(result);
-    });
+    expectSendMessageResult(result);
+  });
 
-    test('sends typing indicator', async () => {
-        // Meta only accepts inbound message IDs for typing/read receipts
-        const inboundMessageId = process.env.INBOUND_MESSAGE_ID;
-        if (!inboundMessageId) {
-            // eslint-disable-next-line no-console
-            console.warn('Skipping typing indicator: set INBOUND_MESSAGE_ID to an inbound wamid');
-            return;
-        }
+  test('sends voice call', async () => {
+    const result = await bot.sendVoiceCall(
+      to,
+      'Call us on WhatsApp for faster help',
+      {
+        displayText: 'Call now',
+        ttlMinutes: 10080,
+        payload: 'test-call-payload',
+      },
+    );
 
-        const result = await bot.sendTypingIndicator(inboundMessageId);
-        expect(result && typeof result === 'object').toBe(true);
-        expect(result.success).toBe(true);
-    });
+    expectSendMessageResult(result);
+  });
 
-    test('sends cta url', async () => {
-        const result = await bot.sendCtaUrl(
-            to,
-            'Check out our website',
-            'Visit site',
-            'https://example.com',
-            {
-                footerText: 'Opens in browser',
-                header: {
-                    type: 'text',
-                    text: 'CTA',
-                },
-            },
-        );
+  test('sends call permission request', async () => {
+    try {
+      const result = await bot.sendCallPermissionRequest(
+        to,
+        'We would like to call you about your order.',
+      );
+      expectSendMessageResult(result);
+    } catch (err: any) {
+      // Permanent permission already approved — request cannot be resent (Meta 138017)
+      if (err?.error?.code === 138017) {
+        expect(err.error.message).toMatch(/call permission/i);
+        return;
+      }
+      throw err;
+    }
+  });
 
-        expectSendMessageResult(result);
-    });
-
-    test('sends voice call', async () => {
-        const result = await bot.sendVoiceCall(
-            to,
-            'Call us on WhatsApp for faster help',
-            {
-                displayText: 'Call now',
-                ttlMinutes: 10080,
-                payload: 'test-call-payload',
-            },
-        );
-
-        expectSendMessageResult(result);
-    });
-
-    test('sends call permission request', async () => {
-        try {
-            const result = await bot.sendCallPermissionRequest(
-                to,
-                'We would like to call you about your order.',
-            );
-            expectSendMessageResult(result);
-        } catch (err: any) {
-            // Permanent permission already approved — request cannot be resent (Meta 138017)
-            if (err?.error?.code === 138017) {
-                expect(err.error.message).toMatch(/call permission/i);
-                return;
-            }
-            throw err;
-        }
-    });
-
-    /*
+  /*
       test('sends flow', async () => {
         const result = await bot.sendFlow(
             to,
@@ -281,522 +280,516 @@ describe('send functions', () => {
         );
 
         expectSendMessageResult(result);
-      });*/
-
+      }); */
 });
 
 describe('server functions', () => {
-    const bot = createBot(fromPhoneNumberId, accessToken, {version});
-    let server: Server | undefined;
-    let app: Application | undefined;
+  const bot = createBot(fromPhoneNumberId, accessToken, { version });
+  let server: Server | undefined;
+  let app: Application | undefined;
 
-    beforeAll(async () => {
-        ({server, app} = await bot.startExpressServer({webhookVerifyToken, webhookPath}));
-    });
+  beforeAll(async () => {
+    ({ server, app } = await bot.startExpressServer({ webhookVerifyToken, webhookPath }));
+  });
 
-    afterAll((): Promise<void> => new Promise((resolve) => {
-        if (!server) {
-            resolve();
-            return;
-        }
+  afterAll((): Promise<void> => new Promise((resolve) => {
+    if (!server) {
+      resolve();
+      return;
+    }
 
-        server.close(() => {
-            // eslint-disable-next-line
+    server.close(() => {
+      // eslint-disable-next-line
             console.log('✔️ Server closed');
-            resolve();
-        });
-    }));
+      resolve();
+    });
+  }));
 
-    test('invalid webhook token', async () => {
-        const sendRequest = (path: string) => request(app)
-            .get(path)
-            .send()
-            .expect(200);
+  test('invalid webhook token', async () => {
+    const sendRequest = (path: string) => request(app)
+      .get(path)
+      .send()
+      .expect(200);
 
-        const paths = [
-            webhookPath,
-            `${webhookPath}?hub.mode=subscribe&hub.challenge=random`,
-            `${webhookPath}?hub.mode=subscribe&hub.verify_token=abcd`,
-            `${webhookPath}?hub.mode=sub&hub.verify_token=abcd&hub.challenge=random`,
-            `${webhookPath}?hub.mode=subscribe&hub.verify_token=abcd&hub.challenge=random`,
-        ];
+    const paths = [
+      webhookPath,
+      `${webhookPath}?hub.mode=subscribe&hub.challenge=random`,
+      `${webhookPath}?hub.mode=subscribe&hub.verify_token=abcd`,
+      `${webhookPath}?hub.mode=sub&hub.verify_token=abcd&hub.challenge=random`,
+      `${webhookPath}?hub.mode=subscribe&hub.verify_token=abcd&hub.challenge=random`,
+    ];
 
-        for (let i = 0; i < paths.length; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            await expect(sendRequest(paths[i])).rejects.toThrow();
-        }
+    for (let i = 0; i < paths.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(sendRequest(paths[i])).rejects.toThrow();
+    }
+  });
+
+  test('verify webhook token', async () => {
+    const challenge = 'random';
+    const { text } = await request(app)
+      .get(`${webhookPath}?hub.mode=subscribe&hub.verify_token=${encodeURIComponent(webhookVerifyToken)}&hub.challenge=${challenge}`)
+      .send()
+      .expect(200);
+
+    expect(text).toBe(challenge);
+  });
+
+  test('send invalid body', async () => {
+    const sendRequest = (data: FreeFormObject) => request(app)
+      .post(webhookPath)
+      .send(data)
+      .expect(200);
+
+    const data = [
+      {},
+      { object: 'abcd' },
+      { entry: [] },
+      { object: 'abcd', entry: [{ changes: [] }] },
+      { object: 'abcd', entry: [{ changes: [{ value: { statuses: [] } }] }] },
+    ];
+
+    for (let i = 0; i < data.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(sendRequest(data[i])).rejects.toThrow();
+    }
+  });
+
+  // eslint-disable-next-line no-async-promise-executor
+  test('listen for new messages', (): Promise<void> => new Promise(async (resolve, reject) => {
+    const payloads = [
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'text',
+        text: { body: 'Hello' },
+      },
+      {
+        from: '12345678',
+        group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+        id: 'wamid.group',
+        timestamp: '1640995200',
+        type: 'text',
+        text: { body: 'Hello from group' },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'image',
+        image: {
+          mime_type: 'image/jpeg',
+          sha256: 'abcd=',
+          id: '1234',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'document',
+        document: {
+          caption: 'Random pdf',
+          filename: 'myfile.pdf',
+          mime_type: 'application/pdf',
+          sha256: 'abcd=',
+          id: '1234',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'audio',
+        audio: {
+          mime_type: 'audio/mpeg',
+          sha256: 'abcd=',
+          id: '1234',
+          voice: false,
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'video',
+        video: {
+          mime_type: 'video/mp4',
+          sha256: 'abcd=',
+          id: '1234',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'sticker',
+        sticker: {
+          mime_type: 'image/webp',
+          sha256: 'abcd=',
+          id: '1234',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'location',
+        location: { latitude: 40.7128, longitude: -74.006, name: 'New York' },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'contacts',
+        contacts: [{
+          name: {
+            formatted_name: 'John Doe',
+            first_name: 'John',
+          },
+          phones: [{
+            type: 'HOME',
+            phone: '0712345678',
+          }],
+          emails: [{
+            type: 'HOME',
+            email: 'random@random.com',
+          }],
+        }],
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'interactive',
+        interactive: {
+          type: 'list_reply',
+          list_reply: {
+            id: 'random_id_1',
+            title: 'Item 1',
+            description: 'Random description',
+          },
+        },
+        context: {
+          from: '12345678',
+          id: 'wamid.abcd',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'interactive',
+        interactive: {
+          type: 'button_reply',
+          button_reply: {
+            id: 'random_id_1',
+            title: 'Button 1',
+          },
+        },
+        context: {
+          from: '12345678',
+          id: 'wamid.abcd',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'button',
+        button: {
+          payload: 'CARD_REPLACEMENT_REJECT',
+          text: 'Reject Request',
+        },
+        context: {
+          from: '12345678',
+          id: 'wamid.abcd',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'reaction',
+        reaction: {
+          message_id: 'wamid.original',
+          emoji: '👍',
+        },
+      },
+      {
+        from: '12345678',
+        id: 'wamid.abcd',
+        timestamp: '1640995200',
+        type: 'interactive',
+        interactive: {
+          type: 'nfm_reply',
+          nfm_reply: {
+            name: 'flow',
+            body: 'Sent',
+            response_json: {
+              flow_token: 'flows-builder-a0697cdc',
+              data: {
+                airtime: {
+                  amount: '10',
+                  currency: 'USD',
+                  mobile: '0774166961',
+                  account: '20001901234',
+                  pin: '0000',
+                  fee: '147',
+                },
+                msisdn: '263774166961',
+              },
+              screen: 'ConfirmAirtime',
+            },
+          },
+        },
+        context: {
+          from: '12345678',
+          id: 'wamid.abcd',
+        },
+      },
+    ];
+
+    let i = 0;
+
+    // TODO: listen for each event, e.g. bot.on('text', ...)
+
+    bot.on('message', async (raw) => {
+      const message = raw as import('./createBot.types').Message;
+      expect(message && typeof message === 'object').toBe(true);
+      expect(message).toHaveProperty('from');
+      expect(message).toHaveProperty('id');
+      expect(message).toHaveProperty('timestamp');
+      expect(message).toHaveProperty('type');
+      expect(message).toHaveProperty('data');
+
+      expect(typeof message.from).toBe('string');
+      expect(typeof message.id).toBe('string');
+      expect(typeof message.timestamp).toBe('string');
+      expect(typeof message.type).toBe('string');
+      expect(Object.values(PubSubEvents)).toContain(message.type);
+
+      if (message.name) {
+        expect(typeof message.name).toBe('string');
+      } else {
+        expect(message.name === undefined).toBe(true);
+      }
+
+      expect(typeof message.data === 'object').toBe(true);
+      const { data } = message;
+
+      switch (message.type) {
+        case 'text':
+          expect(data).toHaveProperty('text');
+          expect(typeof data.text).toBe('string');
+          if (message.id === 'wamid.group') {
+            expect(message.group_id).toBe(
+              'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+            );
+          }
+          break;
+
+        case 'image':
+        case 'document':
+        case 'audio':
+        case 'video':
+        case 'sticker':
+          expect(data).toHaveProperty('mime_type');
+          expect(data).toHaveProperty('sha256');
+          expect(data).toHaveProperty('id');
+
+          expect(typeof data.mime_type).toBe('string');
+          expect(typeof data.sha256).toBe('string');
+          expect(typeof data.id).toBe('string');
+          if (data.caption) {
+            expect(typeof data.caption).toBe('string');
+          }
+          if (data.filename) {
+            expect(typeof data.filename).toBe('string');
+          }
+          if (data.voice) {
+            expect(typeof data.voice).toBe('boolean');
+          }
+          break;
+
+        case 'location':
+          expect(data).toHaveProperty('latitude');
+          expect(data).toHaveProperty('longitude');
+
+          expect(typeof data.latitude).toBe('number');
+          expect(typeof data.longitude).toBe('number');
+          if (data.name) {
+            expect(typeof data.name).toBe('string');
+          }
+          if (data.address) {
+            expect(typeof data.address).toBe('string');
+          }
+          break;
+
+        case 'contacts':
+          expect(Array.isArray(data)).toBe(true);
+          data.forEach((item: FreeFormObject) => expect(typeof item === 'object').toBe(true));
+          break;
+
+        case 'list_reply':
+        case 'button_reply':
+          expect(data).toHaveProperty('id');
+          expect(data).toHaveProperty('title');
+          expect(data).toHaveProperty('context');
+
+          expect(typeof data.id).toBe('string');
+          expect(typeof data.title).toBe('string');
+          if (data.description) {
+            expect(typeof data.description).toBe('string');
+          }
+
+          expect(typeof data.context === 'object').toBe(true);
+          expect(data.context).toHaveProperty('from');
+          expect(data.context).toHaveProperty('id');
+
+          expect(typeof data.context.from).toBe('string');
+          expect(typeof data.context.id).toBe('string');
+          break;
+        case 'reaction':
+          expect(data).toHaveProperty('message_id');
+          expect(data).toHaveProperty('emoji');
+          expect(typeof data.message_id).toBe('string');
+          expect(typeof data.emoji).toBe('string');
+          break;
+        case 'nfm_reply':
+          expect(data).toHaveProperty('name');
+          expect(data).toHaveProperty('body');
+          expect(data).toHaveProperty('response_json');
+          expect(typeof data.name).toBe('string');
+          expect(typeof data.body).toBe('string');
+          expect(typeof data.response_json === 'object').toBe(true);
+          expect(data.response_json).toHaveProperty('flow_token');
+          expect(data.response_json).toHaveProperty('data');
+          expect(data.response_json).toHaveProperty('screen');
+          expect(typeof data.response_json.flow_token).toBe('string');
+          expect(typeof data.response_json.data).toBe('object');
+          expect(typeof data.response_json.screen).toBe('string');
+          break;
+        default:
+          break;
+      }
+
+      i += 1;
+
+      if (i === payloads.length) {
+        resolve();
+      }
     });
 
-    test('verify webhook token', async () => {
-        const challenge = 'random';
-        const {text} = await request(app)
-            .get(`${webhookPath}?hub.mode=subscribe&hub.verify_token=${encodeURIComponent(webhookVerifyToken)}&hub.challenge=${challenge}`)
-            .send()
-            .expect(200);
+    try {
+      Object.values(payloads).map(async (payload) => {
+        await request(app)
+          .post(webhookPath)
+          .send({
+            object: 'abcd',
+            entry: [{
+              changes: [{
+                value: {
+                  messages: [payload],
+                  contacts: [{
+                    profile: {
+                      name: getRandomInt(0, 1) ? 'John Doe' : undefined,
+                    },
+                  }],
+                  metadata: {
+                    phone_number_id: fromPhoneNumberId,
+                  },
+                },
+              }],
+            }],
+          })
+          .expect(200);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  }));
 
-        expect(text).toBe(challenge);
+  test('listen for group lifecycle webhook', (): Promise<void> => new Promise((resolve, reject) => {
+    bot.on('group_lifecycle_update', async (event: any) => {
+      try {
+        expect(event.field).toBe('group_lifecycle_update');
+        expect(event.data).toHaveProperty('group_id');
+        expect(event.data.group_id).toBe('Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD');
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
     });
 
-    test('send invalid body', async () => {
-        const sendRequest = (data: FreeFormObject) => request(app)
-            .post(webhookPath)
-            .send(data)
-            .expect(200);
+    request(app)
+      .post(webhookPath)
+      .send({
+        object: 'whatsapp_business_account',
+        entry: [{
+          id: 'waba-id',
+          changes: [{
+            field: 'group_lifecycle_update',
+            value: {
+              messaging_product: 'whatsapp',
+              metadata: {
+                phone_number_id: fromPhoneNumberId,
+                display_phone_number: '263778039199',
+              },
+              group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
+              event: 'group_create',
+              invite_link: 'https://chat.whatsapp.com/AbCdEf',
+            },
+          }],
+        }],
+      })
+      .expect(200)
+      .catch(reject);
+  }));
 
-        const data = [
-            {},
-            {object: 'abcd'},
-            {entry: []},
-            {object: 'abcd', entry: [{changes: []}]},
-            {object: 'abcd', entry: [{changes: [{value: {statuses: []}}]}]},
-        ];
-
-        for (let i = 0; i < data.length; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            await expect(sendRequest(data[i])).rejects.toThrow();
-        }
+  test('listen for calls webhook', (): Promise<void> => new Promise((resolve, reject) => {
+    bot.on('calls', async (event: any) => {
+      try {
+        expect(event.field).toBe('calls');
+        expect(event.data.calls[0].id).toBe('wacid.test');
+        expect(event.data.calls[0].event).toBe('connect');
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
     });
 
-    // eslint-disable-next-line no-async-promise-executor
-    test('listen for new messages', (): Promise<void> => new Promise(async (resolve, reject) => {
-        const payloads = [
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
+    request(app)
+      .post(webhookPath)
+      .send({
+        object: 'whatsapp_business_account',
+        entry: [{
+          id: 'waba-id',
+          changes: [{
+            field: 'calls',
+            value: {
+              messaging_product: 'whatsapp',
+              metadata: {
+                phone_number_id: fromPhoneNumberId,
+                display_phone_number: '263778039199',
+              },
+              calls: [{
+                id: 'wacid.test',
+                from: '263774166961',
+                to: '263778039199',
+                event: 'connect',
                 timestamp: '1640995200',
-                type: 'text',
-                text: {body: 'Hello'},
-            },
-            {
-                from: '12345678',
-                group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
-                id: 'wamid.group',
-                timestamp: '1640995200',
-                type: 'text',
-                text: {body: 'Hello from group'},
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'image',
-                image: {
-                    mime_type: 'image/jpeg',
-                    sha256: 'abcd=',
-                    id: '1234',
+                session: {
+                  sdp_type: 'offer',
+                  sdp: 'v=0',
                 },
+              }],
             },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'document',
-                document: {
-                    caption: 'Random pdf',
-                    filename: 'myfile.pdf',
-                    mime_type: 'application/pdf',
-                    sha256: 'abcd=',
-                    id: '1234',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'audio',
-                audio: {
-                    mime_type: 'audio/mpeg',
-                    sha256: 'abcd=',
-                    id: '1234',
-                    voice: false,
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'video',
-                video: {
-                    mime_type: 'video/mp4',
-                    sha256: 'abcd=',
-                    id: '1234',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'sticker',
-                sticker: {
-                    mime_type: 'image/webp',
-                    sha256: 'abcd=',
-                    id: '1234',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'location',
-                location: {latitude: 40.7128, longitude: -74.006, name: 'New York'},
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'contacts',
-                contacts: [{
-                    name: {
-                        formatted_name: 'John Doe',
-                        first_name: 'John',
-                    },
-                    phones: [{
-                        type: 'HOME',
-                        phone: '0712345678',
-                    }],
-                    emails: [{
-                        type: 'HOME',
-                        email: 'random@random.com',
-                    }],
-                }],
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'interactive',
-                interactive: {
-                    type: 'list_reply',
-                    list_reply: {
-                        id: 'random_id_1',
-                        title: 'Item 1',
-                        description: 'Random description',
-                    },
-                },
-                context: {
-                    from: '12345678',
-                    id: 'wamid.abcd',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'interactive',
-                interactive: {
-                    type: 'button_reply',
-                    button_reply: {
-                        id: 'random_id_1',
-                        title: 'Button 1',
-                    },
-                },
-                context: {
-                    from: '12345678',
-                    id: 'wamid.abcd',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'button',
-                button: {
-                    payload: 'CARD_REPLACEMENT_REJECT',
-                    text: 'Reject Request',
-                },
-                context: {
-                    from: '12345678',
-                    id: 'wamid.abcd',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'reaction',
-                reaction: {
-                    message_id: 'wamid.original',
-                    emoji: '👍',
-                },
-            },
-            {
-                from: '12345678',
-                id: 'wamid.abcd',
-                timestamp: '1640995200',
-                type: 'interactive',
-                interactive: {
-                    type: 'nfm_reply',
-                    nfm_reply: {
-                        name: "flow",
-                        body: "Sent",
-                        response_json: {
-                            flow_token: "flows-builder-a0697cdc",
-                            data: {
-                                airtime: {
-                                    amount: "10",
-                                    currency: "USD",
-                                    mobile: "0774166961",
-                                    account: "20001901234",
-                                    pin: "0000",
-                                    fee: "147"
-                                }, msisdn: "263774166961"
-                            },
-                            screen: "ConfirmAirtime"
-                        }
-                    },
-                },
-                context: {
-                    from: '12345678',
-                    id: 'wamid.abcd',
-                },
-            },
-        ];
-
-        let i = 0;
-
-        // TODO: listen for each event, e.g. bot.on('text', ...)
-
-        bot.on('message', async (raw) => {
-            const message = raw as import('./createBot.types').Message;
-            expect(message && typeof message === 'object').toBe(true);
-            expect(message).toHaveProperty('from');
-            expect(message).toHaveProperty('id');
-            expect(message).toHaveProperty('timestamp');
-            expect(message).toHaveProperty('type');
-            expect(message).toHaveProperty('data');
-
-            expect(typeof message.from).toBe('string');
-            expect(typeof message.id).toBe('string');
-            expect(typeof message.timestamp).toBe('string');
-            expect(typeof message.type).toBe('string');
-            expect(Object.values(PubSubEvents)).toContain(message.type);
-
-            if (message.name) {
-                expect(typeof message.name).toBe('string');
-            } else {
-                expect(message.name === undefined).toBe(true);
-            }
-
-            expect(typeof message.data === 'object').toBe(true);
-            const {data} = message;
-
-            switch (message.type) {
-                case 'text':
-                    expect(data).toHaveProperty('text');
-                    expect(typeof data.text).toBe('string');
-                    if (message.id === 'wamid.group') {
-                        expect(message.group_id).toBe(
-                            'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
-                        );
-                    }
-                    break;
-
-                case 'image':
-                case 'document':
-                case 'audio':
-                case 'video':
-                case 'sticker':
-                    expect(data).toHaveProperty('mime_type');
-                    expect(data).toHaveProperty('sha256');
-                    expect(data).toHaveProperty('id');
-
-                    expect(typeof data.mime_type).toBe('string');
-                    expect(typeof data.sha256).toBe('string');
-                    expect(typeof data.id).toBe('string');
-                    if (data.caption) {
-                        expect(typeof data.caption).toBe('string');
-                    }
-                    if (data.filename) {
-                        expect(typeof data.filename).toBe('string');
-                    }
-                    if (data.voice) {
-                        expect(typeof data.voice).toBe('boolean');
-                    }
-                    break;
-
-                case 'location':
-                    expect(data).toHaveProperty('latitude');
-                    expect(data).toHaveProperty('longitude');
-
-                    expect(typeof data.latitude).toBe('number');
-                    expect(typeof data.longitude).toBe('number');
-                    if (data.name) {
-                        expect(typeof data.name).toBe('string');
-                    }
-                    if (data.address) {
-                        expect(typeof data.address).toBe('string');
-                    }
-                    break;
-
-                case 'contacts':
-                    expect(Array.isArray(data)).toBe(true);
-                    data.forEach((item: FreeFormObject) => expect(typeof item === 'object').toBe(true));
-                    break;
-
-                case 'list_reply':
-                case 'button_reply':
-                    expect(data).toHaveProperty('id');
-                    expect(data).toHaveProperty('title');
-                    expect(data).toHaveProperty('context');
-
-                    expect(typeof data.id).toBe('string');
-                    expect(typeof data.title).toBe('string');
-                    if (data.description) {
-                        expect(typeof data.description).toBe('string');
-                    }
-
-                    expect(typeof data.context === 'object').toBe(true);
-                    expect(data.context).toHaveProperty('from');
-                    expect(data.context).toHaveProperty('id');
-
-                    expect(typeof data.context.from).toBe('string');
-                    expect(typeof data.context.id).toBe('string');
-                    break;
-                case 'reaction':
-                    expect(data).toHaveProperty('message_id');
-                    expect(data).toHaveProperty('emoji');
-                    expect(typeof data.message_id).toBe('string');
-                    expect(typeof data.emoji).toBe('string');
-                    break;
-                case "nfm_reply":
-                    expect(data).toHaveProperty('name');
-                    expect(data).toHaveProperty('body');
-                    expect(data).toHaveProperty('response_json');
-                    expect(typeof data.name).toBe('string');
-                    expect(typeof data.body).toBe('string');
-                    expect(typeof data.response_json === 'object').toBe(true);
-                    expect(data.response_json).toHaveProperty('flow_token');
-                    expect(data.response_json).toHaveProperty('data');
-                    expect(data.response_json).toHaveProperty('screen');
-                    expect(typeof data.response_json.flow_token).toBe('string');
-                    expect(typeof data.response_json.data).toBe('object');
-                    expect(typeof data.response_json.screen).toBe('string');
-                    break
-                default:
-                    break;
-            }
-
-            i += 1;
-
-            if (i === payloads.length) {
-                resolve();
-            }
-        });
-
-        try {
-            Object.values(payloads).map(async (payload) => {
-                await request(app)
-                    .post(webhookPath)
-                    .send({
-                        object: 'abcd',
-                        entry: [{
-                            changes: [{
-                                value: {
-                                    messages: [payload],
-                                    contacts: [{
-                                        profile: {
-                                            name: getRandomInt(0, 1) ? 'John Doe' : undefined,
-                                        },
-                                    }],
-                                    metadata: {
-                                        phone_number_id: fromPhoneNumberId,
-                                    },
-                                },
-                            }],
-                        }],
-                    })
-                    .expect(200);
-            });
-        } catch (err) {
-            reject(err);
-        }
-    }));
-
-    test('listen for group lifecycle webhook', (): Promise<void> => new Promise(async (resolve, reject) => {
-        bot.on('group_lifecycle_update', async (event: any) => {
-            try {
-                expect(event.field).toBe('group_lifecycle_update');
-                expect(event.data).toHaveProperty('group_id');
-                expect(event.data.group_id).toBe('Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD');
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        try {
-            await request(app)
-                .post(webhookPath)
-                .send({
-                    object: 'whatsapp_business_account',
-                    entry: [{
-                        id: 'waba-id',
-                        changes: [{
-                            field: 'group_lifecycle_update',
-                            value: {
-                                messaging_product: 'whatsapp',
-                                metadata: {
-                                    phone_number_id: fromPhoneNumberId,
-                                    display_phone_number: '263778039199',
-                                },
-                                group_id: 'Y2FwaV9ncm91cDoxNzA1NTU1MDEzOToxMjAzNjM0MDQ2OTQyMzM4MjAZD',
-                                event: 'group_create',
-                                invite_link: 'https://chat.whatsapp.com/AbCdEf',
-                            },
-                        }],
-                    }],
-                })
-                .expect(200);
-        } catch (err) {
-            reject(err);
-        }
-    }));
-
-    test('listen for calls webhook', (): Promise<void> => new Promise(async (resolve, reject) => {
-        bot.on('calls', async (event: any) => {
-            try {
-                expect(event.field).toBe('calls');
-                expect(event.data.calls[0].id).toBe('wacid.test');
-                expect(event.data.calls[0].event).toBe('connect');
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        try {
-            await request(app)
-                .post(webhookPath)
-                .send({
-                    object: 'whatsapp_business_account',
-                    entry: [{
-                        id: 'waba-id',
-                        changes: [{
-                            field: 'calls',
-                            value: {
-                                messaging_product: 'whatsapp',
-                                metadata: {
-                                    phone_number_id: fromPhoneNumberId,
-                                    display_phone_number: '263778039199',
-                                },
-                                calls: [{
-                                    id: 'wacid.test',
-                                    from: '263774166961',
-                                    to: '263778039199',
-                                    event: 'connect',
-                                    timestamp: '1640995200',
-                                    session: {
-                                        sdp_type: 'offer',
-                                        sdp: 'v=0',
-                                    },
-                                }],
-                            },
-                        }],
-                    }],
-                })
-                .expect(200);
-        } catch (err) {
-            reject(err);
-        }
-    }));
+          }],
+        }],
+      })
+      .expect(200)
+      .catch(reject);
+  }));
 });

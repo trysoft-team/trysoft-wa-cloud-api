@@ -123,26 +123,26 @@ export interface Bot extends GroupsApi, CallingApi {
   ) => Promise<SendMessageResult>;
 
   sendFlow: (
-      to: string,
-      bodyText: string,
-      buttonName: string,
-      options?: {
-        footerText?: string;
-        header?: InteractiveHeader;
-        flow_token: string;
-        flow_id: string;
-        screen: string;
-        data?: object;
-        context?: object;
-      },
+    to: string,
+    bodyText: string,
+    buttonName: string,
+    options?: {
+      footerText?: string;
+      header?: InteractiveHeader;
+      flow_token: string;
+      flow_id: string;
+      screen: string;
+      data?: object;
+      context?: object;
+    },
   ) => Promise<SendMessageResult>;
 
   sendLocationRequest: (
-      to: string,
-      bodyText: string,
-      options?: {
-        context?: object;
-      },
+    to: string,
+    bodyText: string,
+    options?: {
+      context?: object;
+    },
   ) => Promise<SendMessageResult>;
 
   sendReaction: (

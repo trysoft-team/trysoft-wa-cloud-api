@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { writeFile } from 'fs/promises';
-import {Session} from "node:inspector";
+import { Session } from 'node:inspector';
 
 // https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages
 interface OfficialSendMessageResult {
@@ -26,13 +26,9 @@ export interface SendMessageResult {
 export const sendRequestHelper = (
   fromPhoneNumberId: string,
   accessToken: string,
-  version: string ,
+  version: string,
 ) => async <T>(data: T): Promise<SendMessageResult> => {
   try {
-
-    // @ts-ignore
-    console.log(data);
-
     const { data: rawResult } = await axios({
       method: 'post',
       url: `https://graph.facebook.com/${version}/${fromPhoneNumberId}/messages`,
@@ -51,15 +47,14 @@ export const sendRequestHelper = (
       whatsappId: result?.contacts?.[0]?.wa_id,
       success: result?.success,
       payload: data,
-      response:result
+      response: result,
     };
     // @ts-ignore
     if (!data?.status) {
       // @ts-ignore
-      Session['messaging_'+data.to] = response;
+      Session[`messaging_${data.to}`] = response;
     }
-    return response
-
+    return response;
   } catch (err: unknown) {
     // eslint-disable-next-line no-console
     console.error(err);

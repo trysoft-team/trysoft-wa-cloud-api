@@ -17,7 +17,7 @@ export interface MarkRead {
   status: 'read';
   message_id: string;
   typing_indicator: {
-    "type": "text"
+    'type': 'text'
   }
 }
 
@@ -117,13 +117,13 @@ export interface InteractiveReplyButton {
 export interface InteractiveFlowMessage {
   type: 'flow';
   action: {
-    name: "flow",
+    name: 'flow',
     parameters: {
-      flow_message_version: "3",
-      flow_token:  string,
-      flow_id:  string,
+      flow_message_version: '3',
+      flow_token: string,
+      flow_id: string,
       flow_cta: string,
-      flow_action: "navigate",
+      flow_action: 'navigate',
       flow_action_payload: {
         screen?: string
         data? : object
@@ -136,7 +136,7 @@ export interface InteractiveFlowMessage {
 export interface InteractiveLocationRequestMessage {
   type: 'location_request_message';
   action: {
-    name: "send_location"
+    name: 'send_location'
   }
 }
 

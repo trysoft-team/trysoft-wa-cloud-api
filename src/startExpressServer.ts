@@ -38,6 +38,120 @@ export const startExpressServer = (
 
   const webhookPath = options?.webhookPath || '/webhook/whatsapp';
 
+  function doFieldWebhook(req: any) {
+    const change = req.body.entry[0].changes[0];
+    const webhookField = change.field as PubSubEvent;
+    const value = change.value || {};
+    const fromPhoneNumberId = value.metadata?.phone_number_id
+      || value.phone_number_id
+      || req.body.entry[0].id;
+    const fromPhoneNumber = value.metadata?.display_phone_number;
+
+    const payload: GroupWebhookPayload | CallWebhookPayload = {
+      wab_pid: fromPhoneNumberId,
+      wab_number: fromPhoneNumber,
+      field: webhookField,
+      data: value,
+    };
+
+    [
+      `bot-${fromPhoneNumberId}-${webhookField}`,
+    ].forEach((e) => PubSub.publish(e, payload));
+  }
+
+  function doMessage(req: any) {
+    const messages = req.body.entry[0].changes[0].value?.messages;
+    if (!messages?.[0]) {
+      return;
+    }
+
+    const {
+      from,
+      id,
+      timestamp,
+      type,
+      group_id: groupId,
+      ...rest
+    } = messages[0];
+    const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
+    const fromPhoneNumber = req.body.entry[0].changes[0].value.metadata.display_phone_number;
+
+    let event: PubSubEvent | undefined;
+    let data: FreeFormObject | undefined;
+
+    switch (type) {
+      case 'text':
+        event = PubSubEvents.text;
+        data = { text: rest.text?.body };
+        break;
+
+      case 'image':
+      case 'document':
+      case 'audio':
+      case 'video':
+      case 'sticker':
+      case 'location':
+      case 'order':
+      case 'contacts':
+      case 'reaction':
+        event = PubSubEvents[type as PubSubEvent];
+        data = rest[type];
+        break;
+      case 'interactive':
+        event = rest.interactive.type;
+        data = {
+          ...(rest.interactive.list_reply
+            || rest.interactive.button_reply
+            || rest.interactive.nfm_reply
+            || rest.interactive.call_permission_reply),
+        };
+        break;
+
+      // Template quick-reply button (type: button) — normalize as button_reply
+      case 'button':
+        event = PubSubEvents.button_reply;
+        data = {
+          id: rest.button?.payload,
+          title: rest.button?.text,
+        };
+        break;
+
+      default:
+        break;
+    }
+
+    if (rest.context) {
+      data = {
+        ...data,
+        context: rest.context,
+      };
+    }
+    const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
+    // eslint-disable-next-line
+    const wab_pid = fromPhoneNumberId;
+    // eslint-disable-next-line
+    const wab_number = fromPhoneNumber;
+
+    if (event && data) {
+      const payload: Message = {
+        wab_pid,
+        wab_number,
+        from,
+        name,
+        id,
+        timestamp,
+        type: event,
+        data,
+        ...(groupId ? { group_id: groupId } : {}),
+      };
+
+      [
+        `bot-${fromPhoneNumberId}-message`,
+        `bot-${fromPhoneNumberId}-${event}`,
+      ].forEach((e) => PubSub.publish(e, payload));
+    }
+  }
+
   if (options?.webhookVerifyToken) {
     app.get(webhookPath, (req, res) => {
       if (!req.query) {
@@ -125,115 +239,6 @@ export const startExpressServer = (
 
     res.sendStatus(200);
   });
-
-  function doFieldWebhook(req: any) {
-    const change = req.body.entry[0].changes[0];
-    const webhookField = change.field as PubSubEvent;
-    const value = change.value || {};
-    const fromPhoneNumberId = value.metadata?.phone_number_id
-      || value.phone_number_id
-      || req.body.entry[0].id;
-    const fromPhoneNumber = value.metadata?.display_phone_number;
-
-    const payload: GroupWebhookPayload | CallWebhookPayload = {
-      wab_pid: fromPhoneNumberId,
-      wab_number: fromPhoneNumber,
-      field: webhookField,
-      data: value,
-    };
-
-    [
-      `bot-${fromPhoneNumberId}-${webhookField}`,
-    ].forEach((e) => PubSub.publish(e, payload));
-  }
-
-  function doMessage(req: any) {
-    const {
-      from,
-      id,
-      timestamp,
-      type,
-      group_id: groupId,
-      ...rest
-    } = req.body.entry[0].changes[0].value?.messages[0];
-    const fromPhoneNumberId = req.body.entry[0].changes[0].value.metadata.phone_number_id;
-    const fromPhoneNumber = req.body.entry[0].changes[0].value.metadata.display_phone_number;
-
-    let event: PubSubEvent | undefined;
-    let data: FreeFormObject | undefined;
-
-    switch (type) {
-      case 'text':
-        event = PubSubEvents.text;
-        data = { text: rest.text?.body };
-        break;
-
-      case 'image':
-      case 'document':
-      case 'audio':
-      case 'video':
-      case 'sticker':
-      case 'location':
-      case 'order':
-      case 'contacts':
-      case 'reaction':
-        event = PubSubEvents[type as PubSubEvent];
-        data = rest[type];
-        break;
-      case 'interactive':
-        event = rest.interactive.type;
-        data = {
-          ...(rest.interactive.list_reply
-            || rest.interactive.button_reply
-            || rest.interactive.nfm_reply
-            || rest.interactive.call_permission_reply),
-        };
-        break;
-
-      // Template quick-reply button (type: button) — normalize as button_reply
-      case 'button':
-        event = PubSubEvents.button_reply;
-        data = {
-          id: rest.button?.payload,
-          title: rest.button?.text,
-        };
-        break;
-
-      default:
-        break;
-    }
-
-    if (rest.context) {
-      data = {
-        ...data,
-        context: rest.context,
-      };
-    }
-    const name = req.body.entry[0].changes[0].value.contacts?.[0]?.profile?.name ?? undefined;
-    // eslint-disable-next-line
-    const wab_pid = fromPhoneNumberId;
-    // eslint-disable-next-line
-    const wab_number = fromPhoneNumber;
-
-    if (event && data) {
-      const payload: Message = {
-        wab_pid,
-        wab_number,
-        from,
-        name,
-        id,
-        timestamp,
-        type: event,
-        data,
-        ...(groupId ? { group_id: groupId } : {}),
-      };
-
-      [
-        `bot-${fromPhoneNumberId}-message`,
-        `bot-${fromPhoneNumberId}-${event}`,
-      ].forEach((e) => PubSub.publish(e, payload));
-    }
-  }
 
   if (options?.app) {
     resolve({ app });
